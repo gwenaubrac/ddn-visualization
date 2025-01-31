@@ -8,7 +8,8 @@ library(readxl)
 library(dplyr)
 library(magrittr)
 
-# test
+path_data <- "./data"
+covs <- read_excel(paste(path_data, 'covs.xlsx', sep = '/'))
 
 #### DEFINE SPECIFIC ELEMENTS ####
 
@@ -47,6 +48,25 @@ patient_tab <- tabPanel(
   ),
   
   # covs
+  tabItem(
+    tabName = "Covariate Selector",
+    fluidRow(
+      box(
+        status = "primary",
+        solidHeader = FALSE,
+        width = 12,
+        pickerInput("select_covar", "Select Covariates to Plot:", 
+                    choices = unique(covs$cov_name), 
+                    selected = unique(covs$cov_name), 
+                    multiple = TRUE, 
+                    options = list(`live-search` = TRUE, 
+                                   `actions-box` = TRUE,
+                                   `deselect-all-text` = "Select None",
+                                   `select-all-text` = 'Select All'))
+      )
+    )
+  ),
+  
   fluidRow(
     tabBox(
       title = "Covariates",
@@ -64,6 +84,15 @@ patient_tab <- tabPanel(
     box(
       title = "PS Coefficients",
       highchartOutput("ps_coef_plot"),
+      width = 12
+    )
+  ),
+  
+  # ps balance
+  fluidRow(
+    box(
+      title = "PS Balance",
+      plotOutput("ps_bal_plot"),
       width = 12
     )
   ),
@@ -99,8 +128,8 @@ outcome_tab <- tabPanel(
         title = "Forest Plot",
         width = 12,
         selected = "Main",
-        tabPanel("Main", plotlyOutput("hr_main_plot")),
-        tabPanel("Sensitivity", plotlyOutput("hr_sens_plot")),
+        tabPanel("30-day grace period", plotlyOutput("hr_main_plot")),
+        tabPanel("90-day grace period", plotlyOutput("hr_sens_plot")),
         side = "left"
       )
     ),
@@ -121,12 +150,27 @@ outcome_tab <- tabPanel(
   ),
   
   # y_by_month
-  fluidRow(
-    box(
-      title = "Incidence Rate",
-      highchartOutput("y_by_month_plot"),
-      width = 12
+  tabItem(
+    tabName = "y_by_month",
+    fluidRow(
+      box(
+        title = "Incidence Rate",
+        status = "primary",
+        solidHeader = TRUE,
+        highchartOutput("y_by_month_plot"),
+        width = 12
+      ),
     ),
+    fluidRow(
+      box(
+        title = "Description",
+        status = "primary",
+        solidHeader = FALSE,
+        width = 12,
+        # background = "light-blue",
+        'Crude number of events over time.'
+      )
+    )
   ),
   
   # marg_bias

@@ -151,6 +151,16 @@ ps_coef$comparison <- comparison
 write_xlsx(ps_coef, paste(path_res, 'ps_coef.xlsx', sep = '/'))
 rm(iptw_fit, iptw_model)
 
+# to plot PS in app
+ps_bal <- cohort %>% 
+  select(trt, prop_score, iptw) %>% 
+  mutate(prop_score_plot = if_else(trt == 1, prop_score, 1-prop_score))
+
+ps_bal$region <- region
+ps_bal$comparison <- comparison
+
+write_xlsx(ps_bal, paste(path_res, 'ps_bal.xlsx', sep = '/'))
+
 ## b) x_by_month
 x_by_month <- cohort %>% 
   group_by(year_month, trt) %>% 

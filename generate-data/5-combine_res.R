@@ -59,6 +59,7 @@ library(readxl)
 # active comparator cohorts and outcomes
 covs <- data.frame()
 ps_coef <- data.frame()
+ps_bal <- data.frame()
 smd <- data.frame()
 x_by_month <- data.frame()
 hr_main <- data.frame()
@@ -82,13 +83,16 @@ for (path_region in c(cprd_vis, bc_vis, ontario_vis)) {
     ps_coef_cohort <- read_excel(paste(path_region, cohort, 'ps_coef.xlsx', sep = '/'))
     ps_coef <- bind_rows(ps_coef, ps_coef_cohort)
     
+    ps_bal_cohort <- read_excel(paste(path_region, cohort, 'ps_bal.xlsx', sep = '/'))
+    ps_bal <- bind_rows(ps_bal, ps_bal_cohort)
+    
     smd_cohort <- read_excel(paste(path_region, cohort, 'smd.xlsx', sep = '/'))
     smd <- bind_rows(smd, smd_cohort)
     
     x_by_month_cohort <- read_excel(paste(path_region, cohort, 'x_by_month.xlsx', sep = '/'))
     x_by_month <- bind_rows(x_by_month, x_by_month_cohort)
     
-    rm(covs_cohort, ps_coef_cohort, smd_cohort, x_by_month_cohort)
+    rm(covs_cohort, ps_coef_cohort, ps_bal_cohort, smd_cohort, x_by_month_cohort)
     
     # remove events that are only for certain cohorts
     new_outcome_list <- outcome_list
@@ -146,6 +150,7 @@ for (path_region in c(cprd_vis, bc_vis, ontario_vis)) {
 # round all numeric variables to 2 decimals
 covs <- covs %>% mutate_if(is.numeric, round, 3)
 ps_coef <- ps_coef %>% mutate_if(is.numeric, round, 3)
+ps_bal <- ps_bal %>% mutate_if(is.numeric, round, 3)
 smd <- smd %>% mutate_if(is.numeric, round, 3)
 x_by_month <- x_by_month %>% mutate_if(is.numeric, round, 3)
 hr_main <- hr_main %>% mutate_if(is.numeric, round, 3)
@@ -156,8 +161,14 @@ hr_sens <- hr_sens %>% mutate_if(is.numeric, round, 3)
 marg_bias <- marg_bias %>% mutate_if(is.numeric, round, 3)
 y_by_month <- y_by_month %>% mutate_if(is.numeric, round, 3)
 
+# Clean covariate names
+covs$cov_name <- gsub("_base", "", covs$cov_name)
+smd$cov_name <- gsub("_base", "", smd$cov_name)
+ps_coef$cov_name <- gsub("_base", "", ps_coef$cov_name)
+
 write_xlsx(covs, 'covs.xlsx')
 write_xlsx(ps_coef, 'ps_coef.xlsx')
+saveRDS(ps_bal, 'ps_bal.rds')
 write_xlsx(smd, 'smd.xlsx')
 write_xlsx(x_by_month, 'x_by_month.xlsx')
 write_xlsx(hr_main, 'hr_main.xlsx')
