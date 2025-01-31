@@ -7,6 +7,8 @@ library(plotly)
 library(readxl)
 library(dplyr)
 library(magrittr)
+library(ggplot2)
+library(gridExtra)
 
 #### DEFINE SPECIFIC ELEMENTS ####
 
@@ -53,6 +55,7 @@ server <- function(input, output, session) {
   
   covs <- read_excel(paste(path_data, 'covs.xlsx', sep = '/'))
   ps_coef <- read_excel(paste(path_data, 'ps_coef.xlsx', sep = '/'))
+  ps_bal <- readRDS(paste(path_data, 'ps_bal.rds', sep = '/'))
   smd <- read_excel(paste(path_data, 'smd.xlsx', sep = '/'))
   hr_main <- read_excel(paste(path_data, 'hr_main.xlsx', sep = '/'))
   hr_sens <- read_excel(paste(path_data, 'hr_sens.xlsx', sep = '/'))
@@ -61,11 +64,6 @@ server <- function(input, output, session) {
   hr_age <- read_excel(paste(path_data, 'hr_age.xlsx', sep = '/'))
   hr_sex <- read_excel(paste(path_data, 'hr_sex.xlsx', sep = '/'))
   hr_year <- read_excel(paste(path_data, 'hr_year.xlsx', sep = '/'))
-  
-  # Clean covariate names
-  covs$cov_name <- gsub("_base", "", covs$cov_name)
-  smd$cov_name <- gsub("_base", "", smd$cov_name)
-  ps_coef$cov_name <- gsub("_base", "", ps_coef$cov_name)
   
   # Define functions
   find_lim <- function(rd) {
@@ -170,9 +168,11 @@ server <- function(input, output, session) {
       hc_yAxis(title = list(text = "Number of New Users"))
   })
   
+  
   output$covs_plot <- renderHighchart({
     filtered_data <- covs %>%
-      filter(comparison == input$cohort)
+      filter(comparison == input$cohort) %>% 
+      filter(cov_name %in% input$select_covar)
     
     hchart(filtered_data,
            'scatter',
@@ -190,7 +190,8 @@ server <- function(input, output, session) {
   
   output$covs_plot_exp1 <- renderHighchart({
     filtered_data <- covs %>%
-      filter(comparison == input$cohort)
+      filter(comparison == input$cohort) %>% 
+      filter(cov_name %in% input$select_covar)
     
     hchart(
       filtered_data,
@@ -210,7 +211,8 @@ server <- function(input, output, session) {
   
   output$covs_plot_exp0 <- renderHighchart({
     filtered_data <- covs %>%
-      filter(comparison == input$cohort)
+      filter(comparison == input$cohort) %>% 
+      filter(cov_name %in% input$select_covar)
     
     hchart(
       filtered_data,
@@ -246,6 +248,48 @@ server <- function(input, output, session) {
       hc_legend(title = list(text = "Region")) %>%
       hc_xAxis(title = list(text = "Covariate")) %>%
       hc_yAxis(title = list(text = "Odds Ratio"))
+  })
+  
+  output$ps_bal_plot <- renderPlot({
+    filtered_data <- ps_bal %>%
+      filter(comparison == input$cohort)
+    
+    trt1_name <- 
+      switch(
+        input$cohort,
+        'snri_vs_ssri' = 'SSRI',
+        'arb_vs_acei' = 'ACEI',
+        'su_vs_dpp4' = 'DPP-4',
+        'su_vs_sglt2' = 'SGLT2',
+        'su_vs_glp1' = 'GLP-1 RA'
+      )
+    
+    trt0_name <- 
+      switch(
+        input$cohort,
+        'snri_vs_ssri' = 'SNRI',
+        'arb_vs_acei' = 'ARB',
+        'su_vs_dpp4' = 'SU',
+        'su_vs_sglt2' = 'SU',
+        'su_vs_glp1' = 'SU'
+      )
+    
+    p1 <- ggplot(filtered_data, aes(x = prop_score_plot, fill = as.factor(trt))) +
+      geom_density(alpha = 0.5) +
+      labs(title = "Before Weighting", x = "Propensity Score", y = "Density") +
+      scale_fill_manual(values = c("blue", "red"), labels = c(trt0_name, trt1_name)) +
+      theme_minimal() +
+      guides(fill = guide_legend(title = "Treatment"))
+    
+    p2 <- ggplot(filtered_data, aes(x = prop_score_plot, fill = as.factor(trt), weight = iptw)) +
+      geom_density(alpha = 0.5) +
+      labs(title = "After Weighting", x = "Propensity Score", y = "Weighted Density") +
+      scale_fill_manual(values = c("blue", "red"), labels = c(trt0_name, trt1_name)) +
+      theme_minimal() +
+      guides(fill = guide_legend(title = "Treatment"))
+    
+    grid.arrange(p1, p2, ncol = 2)
+    
   })
   
   output$smd_plot <- renderHighchart({
