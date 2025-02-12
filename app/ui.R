@@ -7,6 +7,7 @@ library(plotly)
 library(readxl)
 library(dplyr)
 library(magrittr)
+library(shinyWidgets)
 
 path_data <- "./data"
 covs <- read_excel(paste(path_data, 'covs.xlsx', sep = '/'))
