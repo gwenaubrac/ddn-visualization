@@ -1,0 +1,12 @@
+name: host_ddn_app
+title: host_ddn_app
+username: gwenaubrac
+account: gwenaubrac
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 13691486
+bundleId: 9789212
+url: https://gwenaubrac.shinyapps.io/host_ddn_app/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
