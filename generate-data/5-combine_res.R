@@ -168,7 +168,7 @@ ps_coef$cov_name <- gsub("_base", "", ps_coef$cov_name)
 
 write_xlsx(covs, 'covs.xlsx')
 write_xlsx(ps_coef, 'ps_coef.xlsx')
-saveRDS(ps_bal, 'ps_bal.rds')
+write_xlsx(ps_bal, 'ps_bal.xlsx')
 write_xlsx(smd, 'smd.xlsx')
 write_xlsx(x_by_month, 'x_by_month.xlsx')
 write_xlsx(hr_main, 'hr_main.xlsx')

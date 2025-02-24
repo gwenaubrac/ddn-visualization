@@ -125,7 +125,7 @@ summary(cohort[covariates])
 ps_model <- reformulate(covariates, 'trt')
 ps_fit <- glm(ps_model, family= binomial, data = cohort)
 cohort$prop_score <- predict(ps_fit, type = 'response')
-cohort$iptw <- if_else(cohort$trt == 0, 1 / (1 - cohort$prop_score), 1 / ps)
+cohort$iptw <- if_else(cohort$trt == 0, 1 / (1 - cohort$prop_score), 1 / cohort$prop_score)
 
 summary(cohort$iptw)
 sd(cohort$iptw)

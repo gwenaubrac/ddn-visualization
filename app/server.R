@@ -343,13 +343,16 @@ server <- function(input, output, session) {
     
     # weighted PS distribution
     p <- hchart(
-      density(data_trt0$prop_score, weights = data_trt0$iptw), 
+      density(data_trt0$prop_score, 
+              weights = data_trt0$iptw/sum(data_trt0$iptw)), 
       type = "area", 
       color = "steelblue", 
       name = trt0_name
     ) %>%
       hc_add_series(
-        density(data_trt1$prop_score, weights = data_trt1$iptw), type = "area",
+        density(data_trt1$prop_score, 
+                weights = data_trt1$iptw/sum(data_trt1$iptw)), 
+        type = "area",
         color = "#B71C1C", 
         name = trt1_name
       )
