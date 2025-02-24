@@ -92,9 +92,14 @@ patient_tab <- tabPanel(
   # ps balance
   fluidRow(
     box(
-      title = "PS Balance",
-      plotOutput("ps_bal_plot"),
-      width = 12
+      title = "PS Balance Before IPTW",
+      highchartOutput("ps_bal_plot_unweighted"),
+      width = 6
+    ),
+    box(
+      title = "PS Balance After IPTW",
+      highchartOutput("ps_bal_plot_weighted"),
+      width = 6
     )
   ),
   
