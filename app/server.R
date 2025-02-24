@@ -55,7 +55,7 @@ server <- function(input, output, session) {
   
   covs <- read_excel(paste(path_data, 'covs.xlsx', sep = '/'))
   ps_coef <- read_excel(paste(path_data, 'ps_coef.xlsx', sep = '/'))
-  ps_bal <- read_excel(paste(path_data, 'ps_bal.xlsx', sep = '/'))
+  ps_bal <- readRDS(paste(path_data, 'ps_bal.rds', sep = '/'))
   smd <- read_excel(paste(path_data, 'smd.xlsx', sep = '/'))
   hr_main <- read_excel(paste(path_data, 'hr_main.xlsx', sep = '/'))
   hr_sens <- read_excel(paste(path_data, 'hr_sens.xlsx', sep = '/'))

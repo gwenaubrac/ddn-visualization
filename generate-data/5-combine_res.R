@@ -83,7 +83,7 @@ for (path_region in c(cprd_vis, bc_vis, ontario_vis)) {
     ps_coef_cohort <- read_excel(paste(path_region, cohort, 'ps_coef.xlsx', sep = '/'))
     ps_coef <- bind_rows(ps_coef, ps_coef_cohort)
     
-    ps_bal_cohort <- read_excel(paste(path_region, cohort, 'ps_bal.xlsx', sep = '/'))
+    ps_bal_cohort <- readRDS(paste(path_region, cohort, 'ps_bal.rds', sep = '/'))
     ps_bal <- bind_rows(ps_bal, ps_bal_cohort)
     
     smd_cohort <- read_excel(paste(path_region, cohort, 'smd.xlsx', sep = '/'))
@@ -168,7 +168,7 @@ ps_coef$cov_name <- gsub("_base", "", ps_coef$cov_name)
 
 write_xlsx(covs, 'covs.xlsx')
 write_xlsx(ps_coef, 'ps_coef.xlsx')
-write_xlsx(ps_bal, 'ps_bal.xlsx')
+saveRDS(ps_bal, 'ps_bal.rds') # save as RDS due to file size
 write_xlsx(smd, 'smd.xlsx')
 write_xlsx(x_by_month, 'x_by_month.xlsx')
 write_xlsx(hr_main, 'hr_main.xlsx')

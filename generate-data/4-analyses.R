@@ -154,7 +154,8 @@ ps_bal <- cohort %>%
 ps_bal$region <- region
 ps_bal$comparison <- comparison
 
-write_xlsx(ps_bal, paste(path_res, 'ps_bal.xlsx', sep = '/'))
+# save as RDS due to file size
+saveRDS(ps_bal, paste(path_res, 'ps_bal.rds', sep = '/'))
 
 ## b) x_by_month
 x_by_month <- cohort %>% 
