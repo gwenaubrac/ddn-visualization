@@ -125,8 +125,6 @@ summary(cohort[covariates])
 ps_model <- reformulate(covariates, 'trt')
 ps_fit <- glm(ps_model, family= binomial, data = cohort)
 cohort$prop_score <- predict(ps_fit, type = 'response')
-cohort$prop_score_plot <- predict(ps_fit, type = 'response') # to plot PS in vis app
-
 cohort$iptw <- if_else(cohort$trt == 0, 1 / (1 - cohort$prop_score), 1 / ps)
 
 summary(cohort$iptw)
@@ -149,6 +147,9 @@ ps_coef$comparison <- comparison
 
 write_xlsx(ps_coef, paste(path_res, 'ps_coef.xlsx', sep = '/'))
 rm(ps_fit, ps_model)
+
+ps_bal <- cohort %>% 
+  select(trt, prop_score, iptw)
 
 ps_bal$region <- region
 ps_bal$comparison <- comparison

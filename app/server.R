@@ -55,7 +55,7 @@ server <- function(input, output, session) {
   
   covs <- read_excel(paste(path_data, 'covs.xlsx', sep = '/'))
   ps_coef <- read_excel(paste(path_data, 'ps_coef.xlsx', sep = '/'))
-  ps_bal <- readRDS(paste(path_data, 'ps_bal.rds', sep = '/'))
+  ps_bal <- read_excel(paste(path_data, 'ps_bal.xlsx', sep = '/'))
   smd <- read_excel(paste(path_data, 'smd.xlsx', sep = '/'))
   hr_main <- read_excel(paste(path_data, 'hr_main.xlsx', sep = '/'))
   hr_sens <- read_excel(paste(path_data, 'hr_sens.xlsx', sep = '/'))
@@ -278,13 +278,13 @@ server <- function(input, output, session) {
     data_trt1 <- filtered_data %>% filter(trt == 1)
     
     p <- hchart(
-      density(data_trt0$prop_score_plot), 
+      density(data_trt0$prop_score), 
       type = "area", 
       color = "steelblue", 
       name = trt0_name
     ) %>%
       hc_add_series(
-        density(data_trt1$prop_score_plot), type = "area",
+        density(data_trt1$prop_score), type = "area",
         color = "#B71C1C", 
         name = trt1_name
       )
@@ -343,13 +343,13 @@ server <- function(input, output, session) {
     
     # weighted PS distribution
     p <- hchart(
-      density(data_trt0$prop_score_plot, weights = data_trt0$iptw), 
+      density(data_trt0$prop_score, weights = data_trt0$iptw), 
       type = "area", 
       color = "steelblue", 
       name = trt0_name
     ) %>%
       hc_add_series(
-        density(data_trt1$prop_score_plot, weights = data_trt1$iptw), type = "area",
+        density(data_trt1$prop_score, weights = data_trt1$iptw), type = "area",
         color = "#B71C1C", 
         name = trt1_name
       )
