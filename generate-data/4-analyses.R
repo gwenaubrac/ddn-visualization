@@ -120,20 +120,19 @@ cohort <- switch(
 
 ## a) ps_coef
 
-# fit the IPTW model
+# fit the propensity score model
 summary(cohort[covariates])
-iptw_model <- reformulate(covariates, 'trt')
-iptw_fit <- glm(iptw_model, family= binomial, data = cohort)
+ps_model <- reformulate(covariates, 'trt')
+ps_fit <- glm(ps_model, family= binomial, data = cohort)
+cohort$prop_score <- predict(ps_fit, type = 'response')
+cohort$prop_score_plot <- predict(ps_fit, type = 'response') # to plot PS in vis app
 
-cohort$prop_score <- if_else(cohort$trt == 0, 
-                             1-predict(iptw_fit, type = 'response'),
-                             predict(iptw_fit, type = 'response'))
+cohort$iptw <- if_else(cohort$trt == 0, 1 / (1 - cohort$prop_score), 1 / ps)
 
-cohort$iptw <- 1/cohort$prop_score
 summary(cohort$iptw)
 sd(cohort$iptw)
 
-ps_coef <- tidy(iptw_fit)
+ps_coef <- tidy(ps_fit)
 ps_coef %<>%
   filter(term != '(Intercept)') %>% 
   mutate(odds_ratio = exp(estimate)) %>% 
@@ -149,12 +148,7 @@ ps_coef$region <- region
 ps_coef$comparison <- comparison
 
 write_xlsx(ps_coef, paste(path_res, 'ps_coef.xlsx', sep = '/'))
-rm(iptw_fit, iptw_model)
-
-# to plot PS in app
-ps_bal <- cohort %>% 
-  select(trt, prop_score, iptw) %>% 
-  mutate(prop_score_plot = if_else(trt == 1, prop_score, 1-prop_score))
+rm(ps_fit, ps_model)
 
 ps_bal$region <- region
 ps_bal$comparison <- comparison

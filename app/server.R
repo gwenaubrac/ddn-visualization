@@ -250,9 +250,9 @@ server <- function(input, output, session) {
       hc_yAxis(title = list(text = "Odds Ratio"))
   })
   
-  output$ps_bal_plot <- renderPlot({
+  output$ps_bal_plot_unweighted <- renderHighchart({
     filtered_data <- ps_bal %>%
-      filter(comparison == input$cohort)
+      filter(comparison == input$cohort) 
     
     trt1_name <- 
       switch(
@@ -274,21 +274,107 @@ server <- function(input, output, session) {
         'su_vs_glp1' = 'SU'
       )
     
-    p1 <- ggplot(filtered_data, aes(x = prop_score_plot, fill = as.factor(trt))) +
-      geom_density(alpha = 0.5) +
-      labs(title = "Before Weighting", x = "Propensity Score", y = "Density") +
-      scale_fill_manual(values = c("blue", "red"), labels = c(trt0_name, trt1_name)) +
-      theme_minimal() +
-      guides(fill = guide_legend(title = "Treatment"))
+    data_trt0 <- filtered_data %>% filter(trt == 0)
+    data_trt1 <- filtered_data %>% filter(trt == 1)
     
-    p2 <- ggplot(filtered_data, aes(x = prop_score_plot, fill = as.factor(trt), weight = iptw)) +
-      geom_density(alpha = 0.5) +
-      labs(title = "After Weighting", x = "Propensity Score", y = "Weighted Density") +
-      scale_fill_manual(values = c("blue", "red"), labels = c(trt0_name, trt1_name)) +
-      theme_minimal() +
-      guides(fill = guide_legend(title = "Treatment"))
+    p <- hchart(
+      density(data_trt0$prop_score_plot), 
+      type = "area", 
+      color = "steelblue", 
+      name = trt0_name
+    ) %>%
+      hc_add_series(
+        density(data_trt1$prop_score_plot), type = "area",
+        color = "#B71C1C", 
+        name = trt1_name
+      )
     
-    grid.arrange(p1, p2, ncol = 2)
+    # unweighted PS distribution
+    p %<>%
+      hc_xAxis(
+        labels = list(format = "{value:.2f}"),
+        title = list(text = "Propensity Score")
+      ) %>%
+      hc_yAxis(
+        title = list(text = "Density")
+      ) %>% 
+      hc_tooltip(
+        shared = FALSE, 
+        useHTML = TRUE, 
+        headerFormat = "", 
+        pointFormat = "ps: {point.x:.3f} <br> density: {point.y:.3f}"
+      ) %>%
+      hc_legend(
+        layout = "vertical",
+        align = "right",
+        verticalAlign = "middle"
+      )
+    
+    p
+    
+  })
+  
+  output$ps_bal_plot_weighted <- renderHighchart({
+    filtered_data <- ps_bal %>%
+      filter(comparison == input$cohort) 
+    
+    trt1_name <- 
+      switch(
+        input$cohort,
+        'snri_vs_ssri' = 'SSRI',
+        'arb_vs_acei' = 'ACEI',
+        'su_vs_dpp4' = 'DPP-4',
+        'su_vs_sglt2' = 'SGLT2',
+        'su_vs_glp1' = 'GLP-1 RA'
+      )
+    
+    trt0_name <- 
+      switch(
+        input$cohort,
+        'snri_vs_ssri' = 'SNRI',
+        'arb_vs_acei' = 'ARB',
+        'su_vs_dpp4' = 'SU',
+        'su_vs_sglt2' = 'SU',
+        'su_vs_glp1' = 'SU'
+      )
+    
+    data_trt0 <- filtered_data %>% filter(trt == 0)
+    data_trt1 <- filtered_data %>% filter(trt == 1)
+    
+    # weighted PS distribution
+    p <- hchart(
+      density(data_trt0$prop_score_plot, weights = data_trt0$iptw), 
+      type = "area", 
+      color = "steelblue", 
+      name = trt0_name
+    ) %>%
+      hc_add_series(
+        density(data_trt1$prop_score_plot, weights = data_trt1$iptw), type = "area",
+        color = "#B71C1C", 
+        name = trt1_name
+      )
+    
+    p %<>%
+      hc_xAxis(
+        labels = list(format = "{value:.2f}"),
+        title = list(text = "Propensity Score")
+      ) %>%
+      hc_yAxis(
+        title = list(text = "Weighted Density")
+      ) %>% 
+      hc_tooltip(
+        shared = FALSE, 
+        useHTML = TRUE, 
+        headerFormat = "", 
+        pointFormat = "ps: {point.x:.3f} <br> density: {point.y:.3f}"
+      ) %>%
+      hc_legend(
+        layout = "vertical",
+        align = "right",
+        verticalAlign = "middle"
+      )
+    
+    p
     
   })
   
