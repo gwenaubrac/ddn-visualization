@@ -8,13 +8,27 @@ library(readxl)
 library(dplyr)
 library(magrittr)
 library(shinyWidgets)
+library(shinyalert)
 
 path_data <- "./data"
 covs <- read_excel(paste(path_data, 'covs.xlsx', sep = '/'))
 
-#### DEFINE SPECIFIC ELEMENTS ####
+#### DEFINE PAGES AND TABS FOR THE APP ####
 
-about_page <- tagList(
+home_page <- tagList(
+  
+  tags$style(HTML("
+    h1 {
+      font-size: 36px;  /* Increase font size for h1 */
+    }
+    p {
+      font-size: 18px;  /* Increase font size for paragraphs */
+    }
+    ul {
+      font-size: 16px;  /* Increase font size for unordered list */
+    }
+  ")),
+  
   h1("Distibuted Data Networks Visualization Tool"),
   p("Distributed data networks (DDNs) and multi-database studies offer new ways of conducting health research that is rapid, rigorous, and reproducible."),
   p("However, the study populations contained in each database may be heterogeneous in terms of event rates and confounding structures."),
@@ -34,90 +48,126 @@ about_page <- tagList(
 
 patient_tab <- tabPanel(
   "PATIENTS",
+  id = "patients_tab",
+
+  ## description
+  fluidRow(
+    box(
+      title = "About",
+      status = "primary",
+      solidHeader = FALSE,
+      width = 12,
+      "This page describes the characteristics of patients in the cohort. For more information on each plot, click on the icon on the right."
+    )
+  ),
   
   ## x_by_month
   fluidRow(
+    column(11,
     tabBox(
-      title = "Number of New Users",
+      title = HTML("<strong>Number of New Users</strong>"),
       selected = "All",
       width = 12,
       tabPanel("All", highchartOutput("x_by_month_plot")),
       tabPanel(title = uiOutput("exp1_panel_x"), highchartOutput("x_by_month_plot_exp1")),
       tabPanel(title = uiOutput("exp0_panel_x"), highchartOutput("x_by_month_plot_exp0")),
       side = "right"
+    )
     ),
+    column(1,
+      actionButton("info_x_by_month", label = NULL, icon = icon("info"))
+    )
   ),
   
   # covs
-  tabItem(
-    tabName = "Covariate Selector",
-    fluidRow(
-      box(
-        status = "primary",
-        solidHeader = FALSE,
-        width = 12,
-        pickerInput("select_covar", "Select Covariates to Plot:", 
-                    choices = unique(covs$cov_name), 
-                    selected = unique(covs$cov_name), 
-                    multiple = TRUE, 
-                    options = list(`live-search` = TRUE, 
-                                   `actions-box` = TRUE,
-                                   `deselect-all-text` = "Select None",
-                                   `select-all-text` = 'Select All'))
-      )
-    )
-  ),
-  
   fluidRow(
-    tabBox(
-      title = "Covariates",
-      selected = "All",
-      width = 12,
-      tabPanel("All", highchartOutput("covs_plot")),
-      tabPanel(title = uiOutput("exp1_panel_covs"), highchartOutput("covs_plot_exp1")),
-      tabPanel(title = uiOutput("exp0_panel_covs"), highchartOutput("covs_plot_exp0")),
-      side = "right"
-    )
+    column(11,
+           # user can select which covariate to plot
+           pickerInput(
+             "select_covar",
+             "Select Covariates to Plot:",
+             choices = unique(covs$cov_name),
+             selected = unique(covs$cov_name),
+             multiple = TRUE,
+             options = list(
+               `live-search` = TRUE,
+               `actions-box` = TRUE,
+               `deselect-all-text` = "Select None",
+               `select-all-text` = 'Select All'
+             )
+           ),
+           tabBox(
+             title = HTML("<strong>Proportion with Covariates</strong>"),
+             selected = "All",
+             width = 12,
+             tabPanel("All", highchartOutput("covs_plot")),
+             tabPanel(title = uiOutput("exp1_panel_covs"), highchartOutput("covs_plot_exp1")),
+             tabPanel(title = uiOutput("exp0_panel_covs"), highchartOutput("covs_plot_exp0")),
+             side = "right"
+           )
+           ),
+    column(1,
+           actionButton("info_covs", label = NULL, icon = icon("info"))
+           )
+    
   ),
   
   # ps_coef
   fluidRow(
-    box(
-      title = "PS Coefficients",
-      highchartOutput("ps_coef_plot"),
-      width = 12
-    )
+    column(11, 
+           box(
+             title = HTML("<strong>Propensity Score Coefficients</strong>"),
+             highchartOutput("ps_coef_plot"),
+             width = 12
+           )
+           ),
+    column(1,
+           actionButton("info_ps_coef", label = NULL, icon = icon("info"))
+           )
   ),
   
-  # ps balance
-  fluidRow(
-    box(
-      title = "PS Balance Before IPTW",
-      highchartOutput("ps_bal_plot_unweighted"),
-      width = 6
-    ),
-    box(
-      title = "PS Balance After IPTW",
-      highchartOutput("ps_bal_plot_weighted"),
-      width = 6
-    )
-  ),
+  # # ps balance (might be deleted)
+  # fluidRow(
+  #   box(
+  #     title = "PS Balance Before IPTW",
+  #     highchartOutput("ps_bal_plot_unweighted"),
+  #     width = 6
+  #   ),
+  #   box(
+  #     title = "PS Balance After IPTW",
+  #     highchartOutput("ps_bal_plot_weighted"),
+  #     width = 6
+  #   )
+  # ),
   
   # smds
   fluidRow(
-    box(
-      title = "Standardized Mean Differences",
-      highchartOutput("smd_plot"),
-      width = 12
-    )
+    column(width = 11,
+           box(
+             title = HTML("<strong>Standardized Mean Differences</strong>"),
+             highchartOutput("smd_plot"),
+             width = 12
+           )
+           ),
+    column(width = 1,
+           actionButton("info_smd", label = NULL, icon = icon("info"))
+           )
+
   )
 )
 
 outcome_tab <- tabPanel(
   "OUTCOMES",
+  id = "outcomes_tab",
   
+  ## description
   fluidRow(
-    tabBox(
+    box(
+      title = "About",
+      status = "primary",
+      solidHeader = FALSE,
+      width = 12,
+      "This page describes the incidence and risk of different outcomes for the cohort. You can select different outcomes below. For more information on each plot, click on the icon on the right.",
       selectInput(
         "outcome",
         label = "Select Outcome",
@@ -126,74 +176,94 @@ outcome_tab <- tabPanel(
     )
   ),
   
-  # hr_main + hr_sens (forest plot)
+  # y_by_month 
   fluidRow(
     column(
-      width = 10,
-      tabBox(
-        title = "Forest Plot",
-        width = 12,
-        selected = "Main",
-        tabPanel("30-day grace period", plotlyOutput("hr_main_plot")),
-        tabPanel("90-day grace period", plotlyOutput("hr_sens_plot")),
-        side = "left"
+      width = 11,
+      box(
+        title = HTML("<strong>Incidence Rate</strong>"),
+        highchartOutput("y_by_month_plot"),
+        width = 12
       )
     ),
     column(
       width = 1,
-      radioButtons("model", "Model", 
-                   choices = c("ITT", "AT"), selected = "ITT")
+      actionButton("info_y_by_month", label = NULL, icon = icon("info"))
     )
   ),
   
-  # hr_main (ITT vs AT)
+  # hr_itt + hr_at + hr_sens (forest plots)
   fluidRow(
-    box(
-      title = "Intention-to-Treat vs As-Treated",
-      plotlyOutput("itt_vs_at_plot"),
-      width = 12
+    column(
+      width = 11,
+      tabBox(
+        title = HTML("<strong>Hazard Ratio</strong>"),
+        width = 12,
+        selected = "30-day grace period (ITT)",
+        tabPanel("30-day grace period (ITT)", plotlyOutput("hr_itt_plot")),
+        tabPanel("30-day grace period (AT)", plotlyOutput("hr_at_plot")),
+        tabPanel("90-day grace period (AT)", plotlyOutput("hr_sens_plot")),
+        side = "right"
+      )
+    ),
+    column(
+      width = 1,
+      actionButton("info_hr", label = NULL, icon = icon("info"))
     )
   ),
   
-  # y_by_month
-  tabItem(
-    tabName = "y_by_month",
-    fluidRow(
+  # hr_itt vs hr_at
+  fluidRow(
+    column(
+      width = 11,
       box(
-        title = "Incidence Rate",
-        status = "primary",
-        solidHeader = TRUE,
-        highchartOutput("y_by_month_plot"),
+        title = HTML("<strong>Intention-to-Treat vs As-Treated</strong>"),
+        plotlyOutput("itt_vs_at_plot"),
         width = 12
-      ),
-    ),
-    fluidRow(
-      box(
-        title = "Description",
-        status = "primary",
-        solidHeader = FALSE,
-        width = 12,
-        # background = "light-blue",
-        'Crude number of events over time.'
       )
+    ),
+    column(
+      width = 1,
+      actionButton("info_itt_vs_at", label = NULL, icon = icon("info"))
     )
   ),
   
   # marg_bias
   fluidRow(
-    box(
-      title = "Marginal Bias Terms",
-      highchartOutput("marg_bias_plot"),
-      width = 12
+    column(
+      width = 11,
+      pickerInput(
+        "select_covar_bias",
+        "Select Covariates to Plot:",
+        choices = unique(marg_bias$cov_name),
+        selected = unique(marg_bias$cov_name),
+        multiple = TRUE,
+        options = list(
+          `live-search` = TRUE,
+          `actions-box` = TRUE,
+          `deselect-all-text` = "Select None",
+          `select-all-text` = 'Select All'
+        )
+      ),
+      box(
+        title = HTML("<strong>Marginal Bias Terms</strong>"),
+        highchartOutput("marg_bias_plot"),
+        width = 12
+      )
     ),
+    column(
+      width = 1,
+      actionButton("info_marg_bias", label = NULL, icon = icon("info"))
+    )
+
   ),
   
   # hr_age + hr_sex + hr_year
   fluidRow(
     column(
-      width=10,
+      width=11,
       tabBox(
-        title = "Subgroup Analyses",
+        title = HTML("<strong>Hazard Ratio in Subgroups</strong"),
         selected = "Age",
         width = 12,
         tabPanel("Age", plotlyOutput("hr_age_plot")),
@@ -206,9 +276,10 @@ outcome_tab <- tabPanel(
     ),
     column(
       width = 1,
+      actionButton("info_subgroup", label = NULL, icon = icon("info")),
       radioButtons("model_subgroup", "Model", 
                    choices = c("ITT", "AT"), selected = "ITT")
-    )
+    ),
   )
 )
 
@@ -216,16 +287,19 @@ outcome_tab <- tabPanel(
 ui <- dashboardPage(
   
   # Header
-  dashboardHeader(title = "DDN Visualization"),
+  dashboardHeader(title = "DDN Visualization", 
+                  tags$li(class = "dropdown", actionButton("browser", "browser"),
+                          tags$script("$('#browser').hide();")),
+                  dropdownMenuOutput("messageMenu")),
   
   # Sidebar
   dashboardSidebar(
     sidebarMenu(
       id = "sidebarmenu",
-      menuItem("About", tabName = "about", icon = icon("circle-info")),
+      menuItem("Home", tabName = "home", icon = icon("house")),
       menuItem("Results", tabName = "results", icon = icon("chart-simple")),
       
-      ## display cohort buttons only when results is selected
+      ## display cohort buttons only when "results" tab is selected
       conditionalPanel(
         condition = "input.sidebarmenu == 'results'",
         radioButtons(
@@ -280,10 +354,24 @@ ui <- dashboardPage(
       "))
     ),
     
+    # change style for tab names
+    tags$style(HTML("
+    .nav-tabs > li > a {
+      font-size: 18px;
+    }
+  ")),
+    
+    # change style for sidebar items
+    tags$style(HTML("
+    .sidebar-menu > li > a {
+      font-size: 18px; 
+    }
+  ")),
+    
     tabItems(
       tabItem(
-        tabName = "about",
-        about_page
+        tabName = "home",
+        home_page
       ),
       tabItem(
         tabName = "results",
