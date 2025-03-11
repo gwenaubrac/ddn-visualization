@@ -1,18 +1,3 @@
-#### LOAD LIBRARIES ####
-
-library(shiny)
-library(shinydashboard)
-library(highcharter)
-library(plotly)
-library(readxl)
-library(dplyr)
-library(magrittr)
-library(shinyWidgets)
-library(shinyalert)
-
-path_data <- "./data"
-covs <- read_excel(paste(path_data, 'covs.xlsx', sep = '/'))
-
 #### DEFINE PAGES AND TABS FOR THE APP ####
 
 home_page <- tagList(
@@ -57,7 +42,7 @@ patient_tab <- tabPanel(
       status = "primary",
       solidHeader = FALSE,
       width = 12,
-      "This page describes the characteristics of patients in the cohort. For more information on each plot, click on the icon on the right."
+      "This page describes the characteristics of patients in the cohort. You can select the cohort to visualize in the sidebar. You can also click on a region to see data for that region only. For more information on each plot, click on the icon on the right."
     )
   ),
   

@@ -1,17 +1,4 @@
-#### LOAD LIBRARIES ####
-
-library(shiny)
-library(shinydashboard)
-library(highcharter)
-library(plotly)
-library(readxl)
-library(dplyr)
-library(magrittr)
-library(ggplot2)
-library(gridExtra)
-library(shinyalert)
-
-#### DEFINE SPECIFIC ELEMENTS FOR THE APP ####
+#### DEFINE OUTCOMES THAT CAN BE SELECTED ####
 
 # specify which outcomes can be selected and plotted
 # left-hand side: name that appears in app (label)
@@ -56,131 +43,8 @@ find_lim <- function(rd) {
   return(c(lower_limit, upper_limit))
 }
 
-region_colors <- c(
-  "#003f5c",
-  "#bc5090",
-  "#ffa600"
-)
-
 #### APP SERVER ####
 server <- function(input, output, session) {
-  
-  # Load data
-  path_data <- "./data"
-  x_by_month <- read_excel(paste(path_data, 'x_by_month.xlsx', sep = '/'))
-  covs <- read_excel(paste(path_data, 'covs.xlsx', sep = '/'))
-  ps_coef <- read_excel(paste(path_data, 'ps_coef.xlsx', sep = '/'))
-  ps_bal <- readRDS(paste(path_data, 'ps_bal.rds', sep = '/'))
-  smd <- read_excel(paste(path_data, 'smd.xlsx', sep = '/'))
-  y_by_month <- read_excel(paste(path_data, 'y_by_month.xlsx', sep = '/'))
-  hr_main <- read_excel(paste(path_data, 'hr_main.xlsx', sep = '/'))
-  hr_sens <- read_excel(paste(path_data, 'hr_sens.xlsx', sep = '/'))
-  marg_bias <- read_excel(paste(path_data, 'marg_bias.xlsx', sep = '/'))
-  hr_age <- read_excel(paste(path_data, 'hr_age.xlsx', sep = '/'))
-  hr_sex <- read_excel(paste(path_data, 'hr_sex.xlsx', sep = '/'))
-  hr_year <- read_excel(paste(path_data, 'hr_year.xlsx', sep = '/'))
-  
-  #### TESTING START ####
-  x_by_month_bc <- x_by_month %>% 
-    mutate_if(is.numeric, ~ . * 2) %>% 
-    mutate(trt = if_else(trt == 2, 1, 0)) %>% 
-    mutate(region = "bc")
-  
-  x_by_month <- rbind(x_by_month, x_by_month_bc)
-  x_by_month %<>%
-    mutate(num_patients = if_else(region == "bc" & year_month == "2019-03", NA, num_patients))
-  
-  covs_bc <- covs %>% 
-    mutate_if(is.numeric, ~ . * 2) %>% 
-    mutate(region = "bc") 
-  
-  covs <- rbind(covs, covs_bc)
-  
-  covs %<>%
-    mutate(prop = if_else(region == "bc" & cov_name == "acute_renal", NA, prop)) %>% 
-    mutate(prop = if_else(region == "bc" & cov_name == "arrhythmia", NA, prop))
-  
-  
-  ps_coef_bc <- ps_coef %>% 
-    mutate_if(is.numeric, ~ . * 2) %>% 
-    mutate(region = "bc")
-  
-  ps_coef <- rbind(ps_coef, ps_coef_bc)
-  
-  ps_coef$cov_name <- sub("1$", "", ps_coef$cov_name) # clean var name
-  ps_coef %<>%
-    mutate(odds_ratio = if_else(region == "bc" & cov_name == "acute_renal", NA, odds_ratio)) %>% 
-    mutate(odds_ratio = if_else(region == "bc" & cov_name == "arrhythmia", NA, odds_ratio))
-  
-  smd_bc <- smd %>% 
-    mutate_if(is.numeric, ~ . * 2) %>% 
-    mutate(region = "bc")
-  
-  smd <- rbind(smd, smd_bc)
-  
-  smd %<>%
-    mutate(SMD = if_else(region == "bc" & cov_name == "acute_renal", NA, SMD)) %>% 
-    mutate(SMD = if_else(region == "bc" & cov_name == "arrhythmia", NA, SMD))
-  
-  y_by_month_bc <- y_by_month %>% 
-    mutate_if(is.numeric, ~ . * 2) %>% 
-    mutate(region = "bc") %>% 
-    mutate(IRper100 = if_else(event_month == "2019-2", NA, IRper100))
-  
-  y_by_month <- rbind(y_by_month, y_by_month_bc)
-  
-  hr_main_bc <- hr_main %>% 
-    mutate_if(is.numeric, ~ . * 2) %>% 
-    mutate(region = "bc")
-  
-  hr_main <- rbind(hr_main, hr_main_bc) %>% 
-    mutate(hr_estimate = if_else(region == "bc" & comparison == "snri_vs_ssri", NA, hr_estimate)) %>% 
-    mutate(hr_ci_lower = if_else(region == "bc" & comparison == "snri_vs_ssri", NA, hr_ci_lower)) %>% 
-    mutate(hr_ci_upper = if_else(region == "bc" & comparison == "snri_vs_ssri", NA, hr_ci_upper))
-  
-  hr_sens_bc <- hr_sens %>% 
-    mutate_if(is.numeric, ~ . * 2) %>% 
-    mutate(region = "bc")
-  
-  hr_sens <- rbind(hr_sens, hr_sens_bc)
-  
-  marg_bias_bc <- marg_bias %>% 
-    mutate_if(is.numeric, ~ . * 2) %>% 
-    mutate(region = "bc")
-  
-  marg_bias <- rbind(marg_bias, marg_bias_bc)
-  
-  marg_bias %<>%
-    mutate(bias = if_else(region == "bc" & cov_name == "acute_renal", NA, bias)) %>% 
-    mutate(bias = if_else(region == "bc" & cov_name == "arrhythmia", NA, bias))
-  
-  hr_age_bc <- hr_age %>%
-    mutate_if(is.numeric, ~ . * 2) %>%
-    mutate(region = "bc")
-
-  hr_age <- rbind(hr_age, hr_age_bc) %>% 
-    mutate(old_hr_estimate = if_else(region == "bc" & comparison == "snri_vs_ssri", NA, old_hr_estimate)) %>% 
-    mutate(old_hr_ci_lower = if_else(region == "bc" & comparison == "snri_vs_ssri", NA, old_hr_ci_lower)) %>% 
-    mutate(old_hr_ci_upper = if_else(region == "bc" & comparison == "snri_vs_ssri", NA, old_hr_ci_upper))
-
-  hr_year_bc <- hr_year %>%
-    mutate_if(is.numeric, ~ . * 2) %>%
-    mutate(region = "bc")
-
-  hr_year <- rbind(hr_year, hr_year_bc)
-  
-  hr_sex_bc <- hr_sex %>%
-    mutate_if(is.numeric, ~ . * 2) %>%
-    mutate(region = "bc")
-  
-  hr_sex <- rbind(hr_sex, hr_sex_bc)
-  
-  #### TESTING END ####
-  
-  x_by_month_all <- x_by_month %>% 
-    group_by(year_month, region, comparison) %>% 
-    summarise(num_patients = sum(num_patients), .groups = 'drop') %>%
-    mutate(trt = 3)
   
   output$messageMenu <- renderMenu({
     dropdownMenu(type = "messages",
@@ -271,7 +135,7 @@ server <- function(input, output, session) {
     
     hchart(filtered_data,
            "line",
-           hcaes(x = year_month, y = num_patients, group = region)) %>%
+           hcaes(x = as.character(year_month), y = num_patients, group = region)) %>%
       hc_legend(title = list(text = "Region")) %>%
       hc_xAxis(title = list(text = "Month")) %>%
       hc_yAxis(title = list(text = "Number of New Users")) %>% 
@@ -287,7 +151,7 @@ server <- function(input, output, session) {
     
     hchart(filtered_data,
            "line",
-           hcaes(x = year_month, y = num_patients, group = region)) %>%
+           hcaes(x = as.character(year_month), y = num_patients, group = region)) %>%
       hc_legend(title = list(text = "Region")) %>%
       hc_xAxis(title = list(text = "Month")) %>%
       hc_yAxis(title = list(text = "Number of New Users")) %>%
@@ -304,7 +168,7 @@ server <- function(input, output, session) {
     
     hchart(filtered_data,
            "line",
-           hcaes(x = year_month, y = num_patients, group = region)) %>%
+           hcaes(x = as.character(year_month), y = num_patients, group = region)) %>%
       hc_legend(title = list(text = "Region")) %>%
       hc_xAxis(title = list(text = "Month")) %>%
       hc_yAxis(title = list(text = "Number of New Users")) %>% 
@@ -336,7 +200,7 @@ server <- function(input, output, session) {
              name = region,
              group = region,
            ))  %>%
-      hc_tooltip(pointFormat = "<b>{point.cov_name}</b><br>Pct: {point.proportion}") %>%
+      hc_tooltip(pointFormat = "<b>{point.cov_name}</b><br>Pct: {point.prop}") %>%
       hc_legend(title = list(text = "Region")) %>%
       hc_xAxis(title = list(text = "Covariate")) %>%
       hc_yAxis(title = list(text = "Proportion (%)")) %>% 
@@ -427,7 +291,7 @@ server <- function(input, output, session) {
   observeEvent(input$info_ps_coef, {
     shinyalert(
       "Propensity Score Coefficient",
-      "This plot shows the coefficient of each covariate in the propensity score model. This coefficient describes the strenght of the association between each covariate and the treatment.",
+      "This plot shows the exponentiated coefficient (odds ratio) of each covariate in the propensity score model. This coefficient describes the strength of the association between each covariate and the treatment.",
       type = "info"
     )
   })
@@ -614,7 +478,7 @@ server <- function(input, output, session) {
   observeEvent(input$info_smd, {
     shinyalert(
       "Standardized Mean Differences",
-      "This plot shows the crude standardized mean difference in the covariate distribution between treated and untreated patients. A high SMD indicates imbalance between both groups with regards to the covariate. Typically, an SMD below 0.1 is desired to achieve balance.",
+      "This plot shows the crude standardized mean difference in the covariate distribution between treated and untreated patients. A high SMD indicates imbalance between both groups with regards to the covariate. Typically, an absolute SMD below 0.1 (indicated by the dashed line) is desired to achieve balance.",
       type = "info"
     )
   })
@@ -630,7 +494,7 @@ server <- function(input, output, session) {
     hchart(filtered_data,
            "line",
            hcaes(
-             x = event_month,
+             x = as.character(year_month),
              y = round(IRper100, 2),
              group = region
            )) %>%
@@ -645,7 +509,7 @@ server <- function(input, output, session) {
   observeEvent(input$info_y_by_month, {
     shinyalert(
       "Incidence Rates",
-      "This plot shows the crude incidence rate of the event in each month. Incidence rates are calculated as the number of events over the person-time contributed by patients in the cohort.",
+      "This plot shows the crude incidence rate of the event per 100 years for each month. Incidence rates are calculated as the number of events over the person-years contributed by patients in the cohort in each month, multiplied by 100.",
       type = "info"
     )
   })
@@ -666,15 +530,17 @@ server <- function(input, output, session) {
           y = region,
           color = region
         )
-      ) + geom_point() + 
+      ) + 
+        geom_point() + 
         theme_bw() +
         geom_errorbarh(aes(xmin = hr_ci_lower, xmax = hr_ci_upper, height = 0.05)) +
         labs(
           x = "HR (95% CI)",
-          y = "Region"
+          y = "Region",
+          color = "Region"
         ) +
         scale_color_manual(values = region_colors)
-    )
+      )
     
     p
     
@@ -695,11 +561,14 @@ server <- function(input, output, session) {
           y = region,
           color = region
         )
-      ) + geom_point() + theme_bw() +
+      ) + 
+        geom_point() + 
+        theme_bw() +
         geom_errorbarh(aes(xmin = hr_ci_lower, xmax = hr_ci_upper, height = 0.05)) +
         labs(
           x = "HR (95% CI)",
           y = "Region",
+          color = "Region"
         ) +
         scale_color_manual(values = region_colors)
     )
@@ -727,6 +596,7 @@ server <- function(input, output, session) {
         labs(
           x = "HR (95% CI)",
           y = "Region",
+          color = "Region"
         ) +
         scale_color_manual(values = region_colors)
     )
@@ -762,7 +632,9 @@ server <- function(input, output, session) {
           y = hr_estimate_AT,
           color = region
         )
-      ) + geom_point() + theme_bw() +
+      ) + 
+        geom_point() + 
+        theme_bw() +
         geom_errorbar(aes(ymin = hr_ci_lower_AT, ymax = hr_ci_upper_AT, width = 0.05)) +
         geom_errorbarh(aes(xmin = hr_ci_lower_ITT, xmax = hr_ci_upper_ITT, height = 0.05)) +
         geom_abline(
@@ -772,9 +644,9 @@ server <- function(input, output, session) {
         ) +
         xlim(find_lim(plot_data)) + ylim(find_lim(plot_data)) +
         labs(
-          fill = 'Region',
           x = "ITT",
           y = "AT",
+          color = "Region"
         ) +
         scale_color_manual(values = region_colors)
     )
@@ -786,7 +658,7 @@ server <- function(input, output, session) {
   observeEvent(input$info_itt_vs_at, {
     shinyalert(
       "Intention-to-Treat vs As-Treated",
-      "This plot compares the IPTW-weighted estimates (and confidence intervals) for the intention-to-treat (ITT) and the as-treated analysis (AT), in which patients are censored when they discontinue their treatment for 30 days or more.",
+      "This plot compares the IPTW-weighted estimates (and confidence intervals) for the intention-to-treat (ITT) and the as-treated analysis (AT), in which patients are censored when they discontinue their treatment for 30 days or more. The dotted line represents the identity line, along which ITT and AT estimates are equal.",
       type = "info"
     )
   })
@@ -827,8 +699,6 @@ server <- function(input, output, session) {
   # by age
   output$hr_age_plot <- renderPlotly({
     
-    req(input$model_subgroup, input$outcome, input$cohort)
-    
     filtered_data <- hr_age %>%
       filter(outcome == input$outcome &
                comparison == input$cohort &
@@ -842,7 +712,9 @@ server <- function(input, output, session) {
           y = young_hr_estimate,
           color = region
         )
-      ) + geom_point() + theme_bw() +
+      ) + 
+        geom_point() + 
+        theme_bw() +
         geom_errorbar(aes(ymin = young_hr_ci_lower, ymax = young_hr_ci_upper, width = 0.05)) +
         geom_errorbarh(aes(xmin = old_hr_ci_lower, xmax = old_hr_ci_upper, height = 0.05)) +
         geom_abline(
@@ -855,6 +727,7 @@ server <- function(input, output, session) {
           fill = 'Region',
           x = "≥65",
           y = "<65",
+          color = "Region"
         ) +
         scale_color_manual(values = region_colors)
     )
@@ -879,7 +752,9 @@ server <- function(input, output, session) {
           y = male_hr_estimate,
           color = region
         )
-      ) + geom_point() + theme_bw() +
+      ) + 
+        geom_point() +
+        theme_bw() +
         geom_errorbar(aes(ymin = male_hr_ci_lower, ymax = male_hr_ci_upper, width = 0.05)) +
         geom_errorbarh(aes(xmin = female_hr_ci_lower, xmax = female_hr_ci_upper, height = 0.05)) +
         geom_abline(
@@ -892,6 +767,7 @@ server <- function(input, output, session) {
           fill = 'Region',
           x = "Female",
           y = "Male",
+          color = "Region"
         ) +
         scale_color_manual(values = region_colors)
     )
@@ -916,7 +792,9 @@ server <- function(input, output, session) {
           y = x2019_hr_estimate,
           color = region
         )
-      ) + geom_point() + theme_bw() +
+      ) + 
+        geom_point() + 
+        theme_bw() +
         geom_errorbar(aes(ymin = x2019_hr_ci_lower, ymax = x2019_hr_ci_upper), width = 0.05) +
         geom_errorbarh(aes(xmin = x2020_hr_ci_lower, xmax = x2020_hr_ci_upper), height = 0.05) +
         geom_abline(
@@ -929,6 +807,7 @@ server <- function(input, output, session) {
           fill = 'Region',
           x = "2020",
           y = "2019",
+          color = "Region"
         ) +
         scale_color_manual(values = region_colors)
     )
@@ -953,7 +832,9 @@ server <- function(input, output, session) {
           y = x2019_hr_estimate,
           color = region
         )
-      ) + geom_point() + theme_bw() +
+      ) + 
+        geom_point() + 
+        theme_bw() +
         geom_errorbar(aes(ymin = x2019_hr_ci_lower, ymax = x2019_hr_ci_upper, width = 0.05)) +
         geom_errorbarh(aes(xmin = x2021_hr_ci_lower, xmax = x2021_hr_ci_upper, height = 0.05)) +
         geom_abline(
@@ -966,6 +847,7 @@ server <- function(input, output, session) {
           fill = 'Region',
           x = "2021",
           y = "2019",
+          color = "Region"
         ) +
         scale_color_manual(values = region_colors)
     ) 
@@ -990,7 +872,9 @@ server <- function(input, output, session) {
           y = x2019_hr_estimate,
           color = region
         )
-      ) + geom_point() + theme_bw() +
+      ) + 
+        geom_point() + 
+        theme_bw() +
         geom_errorbar(aes(ymin = x2019_hr_ci_lower, ymax = x2019_hr_ci_upper, width = 0.05)) +
         geom_errorbarh(aes(xmin = x2022_hr_ci_lower, xmax = x2022_hr_ci_upper, height = 0.05)) +
         geom_abline(
@@ -1003,6 +887,7 @@ server <- function(input, output, session) {
           fill = 'Region',
           x = "2022",
           y = "2019",
+          color = "Region"
         ) + 
         scale_color_manual(values = region_colors)
     )
@@ -1014,7 +899,7 @@ server <- function(input, output, session) {
   observeEvent(input$info_subgroup, {
     shinyalert(
       "Subgroup Analyses",
-      "These plots show the IPTW-weighted hazard ratios comparing different subgroups. You can select whether to view results for the intention-to-treat (ITT) or as-treated (AT) analyses.",
+      "These plots show the IPTW-weighted hazard ratios comparing different subgroups. You can select whether to view results for the intention-to-treat (ITT) or as-treated (AT) analyses. The dotted line represents the identity line, along which estimates in both subgroups being compared are equal.",
       type = "info"
     )
   })

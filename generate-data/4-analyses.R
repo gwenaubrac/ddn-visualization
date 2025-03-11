@@ -34,7 +34,7 @@
 
 # define comparison from the following:
 # 'snri_vs_ssri', 'arb_vs_acei', 'su_vs_dpp4', 'su_vs_glp1', su_vs_sglt2'
-comparison <- ''
+comparison <- 'su_vs_sglt2'
 region <- 'cprd'
 
 # path results
@@ -986,10 +986,8 @@ for (outcome in outcome_list) {
   marg_bias %<>%
     mutate(bias = if_else(
       estimate > 0,
-      (freq_exp1 * (risk_ratio - 1) + 1) / (freq_exp0 * (risk_ratio -
-                                                           1) + 1),
-      (freq_exp1 * (1 / risk_ratio - 1) + 1) / freq_exp0 * (1 /
-                                                              risk_ratio - 1) + 1
+      (freq_exp1 * (risk_ratio - 1) + 1) / (freq_exp0 * (risk_ratio - 1) + 1),
+      (freq_exp1 * ((1 / risk_ratio) - 1) + 1) / (freq_exp0 * ((1 /risk_ratio) - 1) + 1)
     ))
   
   # clean variable names
@@ -1002,6 +1000,10 @@ for (outcome in outcome_list) {
   
   marg_bias %<>%
     mutate(across(where(is.numeric), ~ round(., 3)))
+  
+  # remove unnecessary columns
+  marg_bias %<>%
+    select(-freq_exp0, -freq_exp1)
   
   write_xlsx(marg_bias,
              paste(path_res, outcome, 'marg_bias.xlsx', sep = '/'))
@@ -1080,7 +1082,7 @@ for (outcome in outcome_list) {
   sum_pt_per_month <- lapply(month_list, function(month) {
     cohort_analytic %>%
       summarize(pdays = sum(.data[[paste('pt', month, sep = '_')]])) %>%
-      mutate(event_month = as.character(month), pyears = pdays / 365)
+      mutate(year_month = as.character(month), pyears = pdays / 365)
   })
   
   sum_pt_per_month <- bind_rows(sum_pt_per_month)
@@ -1088,12 +1090,12 @@ for (outcome in outcome_list) {
   # get number of events in each month
   events_per_month <- cohort_analytic %>%
     filter(itt_event == 1) %>%
-    mutate(event_month = paste(year(itt_event_date), month(itt_event_date), sep = '-')) %>%
-    group_by(event_month) %>%
+    mutate(year_month = paste(year(itt_event_date), month(itt_event_date), sep = '-')) %>%
+    group_by(year_month) %>%
     summarize(num_events = n())
   
   # get IR
-  y_by_month <- data.frame(event_month = month_list)
+  y_by_month <- data.frame(year_month = month_list)
   y_by_month <- merge(y_by_month, events_per_month, all.x = TRUE)
   y_by_month <- merge(y_by_month, sum_pt_per_month, all.x = TRUE)
   
@@ -1121,7 +1123,7 @@ for (outcome in outcome_list) {
   sum_pt_per_month_exp0 <- lapply(month_list, function(month) {
     cohort_analytic_exp0 %>%
       summarize(pdays_exp0 = sum(.data[[paste('pt', month, sep = '_')]])) %>%
-      mutate(event_month = as.character(month), pyears_exp0 = pdays_exp0 / 365)
+      mutate(year_month = as.character(month), pyears_exp0 = pdays_exp0 / 365)
   })
   
   sum_pt_per_month_exp0 <- bind_rows(sum_pt_per_month_exp0)
@@ -1129,12 +1131,12 @@ for (outcome in outcome_list) {
   # get number of events in each month
   events_per_month_exp0 <- cohort_analytic_exp0 %>%
     filter(itt_event == 1) %>%
-    mutate(event_month = paste(year(itt_event_date), month(itt_event_date), sep = '-')) %>%
-    group_by(event_month) %>%
+    mutate(year_month = paste(year(itt_event_date), month(itt_event_date), sep = '-')) %>%
+    group_by(year_month) %>%
     summarize(num_events_exp0 = n())
   
   # get IR
-  y_by_month_exp0 <- data.frame(event_month = month_list)
+  y_by_month_exp0 <- data.frame(year_month = month_list)
   y_by_month_exp0 <- merge(y_by_month_exp0, events_per_month_exp0, all.x = TRUE)
   y_by_month_exp0 <- merge(y_by_month_exp0, sum_pt_per_month_exp0, all.x = TRUE)
   
@@ -1162,7 +1164,7 @@ for (outcome in outcome_list) {
   sum_pt_per_month_exp1 <- lapply(month_list, function(month) {
     cohort_analytic_exp1 %>%
       summarize(pdays_exp1 = sum(.data[[paste('pt', month, sep = '_')]])) %>%
-      mutate(event_month = as.character(month), pyears_exp1 = pdays_exp1 / 365)
+      mutate(year_month = as.character(month), pyears_exp1 = pdays_exp1 / 365)
   })
   
   sum_pt_per_month_exp1 <- bind_rows(sum_pt_per_month_exp1)
@@ -1170,12 +1172,12 @@ for (outcome in outcome_list) {
   # get number of events in each month
   events_per_month_exp1 <- cohort_analytic_exp1 %>%
     filter(itt_event == 1) %>%
-    mutate(event_month = paste(year(itt_event_date), month(itt_event_date), sep = '-')) %>%
-    group_by(event_month) %>%
+    mutate(year_month = paste(year(itt_event_date), month(itt_event_date), sep = '-')) %>%
+    group_by(year_month) %>%
     summarize(num_events_exp1 = n())
   
   # get IR
-  y_by_month_exp1 <- data.frame(event_month = month_list)
+  y_by_month_exp1 <- data.frame(year_month = month_list)
   y_by_month_exp1 <- merge(y_by_month_exp1, events_per_month_exp1, all.x = TRUE)
   y_by_month_exp1 <- merge(y_by_month_exp1, sum_pt_per_month_exp1, all.x = TRUE)
   
@@ -1186,8 +1188,8 @@ for (outcome in outcome_list) {
   
   
   ## (4) final data
-  y_by_month_final <- merge(y_by_month, y_by_month_exp0, by = 'event_month')
-  y_by_month_final <- merge(y_by_month_final, y_by_month_exp1, by = 'event_month')
+  y_by_month_final <- merge(y_by_month, y_by_month_exp0, by = 'year_month')
+  y_by_month_final <- merge(y_by_month_final, y_by_month_exp1, by = 'year_month')
   
   y_by_month_final$region <- region
   y_by_month_final$comparison <- comparison

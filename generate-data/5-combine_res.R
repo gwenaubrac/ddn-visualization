@@ -11,12 +11,14 @@
 ## ---------------------------
 
 #### SET UP ####
+library(lubridate)
+library(dplyr)
 
 # define path to folders containing the results
 cprd_vis <- "Z:/EPI/Protocol 24_004042/Gwen - cprd_vis"
 bc_vis <- ""
 ontario_vis <- ""
-setwd('Z:/EPI/Protocol 24_004042/Gwen  - vis_app')
+setwd("../app/data")
 
 outcome_list <- c(
   
@@ -26,10 +28,8 @@ outcome_list <- c(
   'hypoglycemia_hosp',
   'amputation',
   'mi',
-  #'chf_hosp',
   'copd_exacerbation',
-  #'suicidal_hosp',
-  
+
   # chronic conditions
   'diabetes',
   'hypertension',
@@ -59,7 +59,7 @@ library(readxl)
 # active comparator cohorts and outcomes
 covs <- data.frame()
 ps_coef <- data.frame()
-ps_bal <- data.frame()
+#ps_bal <- data.frame()
 smd <- data.frame()
 x_by_month <- data.frame()
 hr_main <- data.frame()
@@ -83,8 +83,8 @@ for (path_region in c(cprd_vis, bc_vis, ontario_vis)) {
     ps_coef_cohort <- read_excel(paste(path_region, cohort, 'ps_coef.xlsx', sep = '/'))
     ps_coef <- bind_rows(ps_coef, ps_coef_cohort)
     
-    ps_bal_cohort <- readRDS(paste(path_region, cohort, 'ps_bal.rds', sep = '/'))
-    ps_bal <- bind_rows(ps_bal, ps_bal_cohort)
+    # ps_bal_cohort <- readRDS(paste(path_region, cohort, 'ps_bal.rds', sep = '/'))
+    # ps_bal <- bind_rows(ps_bal, ps_bal_cohort)
     
     smd_cohort <- read_excel(paste(path_region, cohort, 'smd.xlsx', sep = '/'))
     smd <- bind_rows(smd, smd_cohort)
@@ -92,7 +92,7 @@ for (path_region in c(cprd_vis, bc_vis, ontario_vis)) {
     x_by_month_cohort <- read_excel(paste(path_region, cohort, 'x_by_month.xlsx', sep = '/'))
     x_by_month <- bind_rows(x_by_month, x_by_month_cohort)
     
-    rm(covs_cohort, ps_coef_cohort, ps_bal_cohort, smd_cohort, x_by_month_cohort)
+    rm(covs_cohort, ps_coef_cohort, smd_cohort, x_by_month_cohort)
     
     # remove events that are only for certain cohorts
     new_outcome_list <- outcome_list
@@ -150,7 +150,7 @@ for (path_region in c(cprd_vis, bc_vis, ontario_vis)) {
 # round all numeric variables to 2 decimals
 covs <- covs %>% mutate_if(is.numeric, round, 3)
 ps_coef <- ps_coef %>% mutate_if(is.numeric, round, 3)
-ps_bal <- ps_bal %>% mutate_if(is.numeric, round, 3)
+#ps_bal <- ps_bal %>% mutate_if(is.numeric, round, 3)
 smd <- smd %>% mutate_if(is.numeric, round, 3)
 x_by_month <- x_by_month %>% mutate_if(is.numeric, round, 3)
 hr_main <- hr_main %>% mutate_if(is.numeric, round, 3)
@@ -164,11 +164,56 @@ y_by_month <- y_by_month %>% mutate_if(is.numeric, round, 3)
 # Clean covariate names
 covs$cov_name <- gsub("_base", "", covs$cov_name)
 smd$cov_name <- gsub("_base", "", smd$cov_name)
-ps_coef$cov_name <- gsub("_base", "", ps_coef$cov_name)
+ps_coef$cov_name <- gsub("_base1", "", ps_coef$cov_name)
 
+# Order months and covariate names
+covs <- covs %>% 
+  group_by(region, comparison) %>% 
+  arrange(region, comparison, cov_name)
+
+ps_coef <- ps_coef %>% 
+  group_by(region, comparison) %>% 
+  arrange(region, comparison, cov_name)
+
+smd <- smd %>% 
+  group_by(region, comparison) %>% 
+  arrange(region, comparison, cov_name)
+
+marg_bias <- marg_bias %>% 
+  group_by(region, comparison, outcome) %>% 
+  arrange(region, comparison, outcome, cov_name)
+
+x_by_month <- x_by_month %>%
+  mutate(year_month = ym(year_month)) %>% 
+  group_by(region, comparison) %>% 
+  arrange(region, comparison, year_month)
+
+y_by_month <- y_by_month %>%
+  mutate(year_month = ym(year_month)) %>% 
+  group_by(region, comparison, outcome) %>% 
+  arrange(region, comparison, outcome, year_month)
+
+# Automate suppression of cells with <5 counts
+x_by_month <- x_by_month %>% 
+  mutate(num_patients = if_else(num_patients <= 5, NA, num_patients))
+
+y_by_month <- y_by_month %>% 
+  mutate(num_events = if_else(num_events <= 5, NA, num_events))
+
+covs <- covs %>% 
+  mutate(
+    count = if_else(count <= 5, NA, count),
+    count_trt1 = if_else(count <= 5, NA, count_trt1),
+    count_trt0 = if_else(count <= 5, NA, count_trt0),
+    prop = if_else(count <= 5, NA, prop),
+    prop_trt1 = if_else(count <= 5, NA, prop_trt1),
+    prop_trt0 = if_else(count <= 5, NA, prop_trt0)
+    )
+
+# Ensure missing values are encoded as NAs
 write_xlsx(covs, 'covs.xlsx')
 write_xlsx(ps_coef, 'ps_coef.xlsx')
-saveRDS(ps_bal, 'ps_bal.rds') # save as RDS due to file size
+#saveRDS(ps_bal, 'ps_bal.rds') # save as RDS due to file size
 write_xlsx(smd, 'smd.xlsx')
 write_xlsx(x_by_month, 'x_by_month.xlsx')
 write_xlsx(hr_main, 'hr_main.xlsx')
