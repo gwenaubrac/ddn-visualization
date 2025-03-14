@@ -33,16 +33,6 @@ cohort_outcomes <- list(
   su_vs_dpp4 = all_outcomes[!all_outcomes %in% c("diabetes")]
 )
 
-# define function to determine range of data to plot
-find_lim <- function(rd) {
-  rd %<>% select(where(is.numeric))
-  lims <- range(rd[, ])
-  lower_limit <- round(min(lims) - (min(lims) * 0.15), 2)
-  upper_limit <- round(max(lims) + (max(lims) * 0.15), 2)
-  
-  return(c(lower_limit, upper_limit))
-}
-
 #### APP SERVER ####
 server <- function(input, output, session) {
   
@@ -77,6 +67,7 @@ server <- function(input, output, session) {
   })
   
   # Update tab names for exposed/unexposed based on cohort selected
+  # define "exposed" group
   output$exp1_panel_x <- renderText({
     switch(
       input$cohort,
@@ -88,6 +79,7 @@ server <- function(input, output, session) {
     )
   })
   
+  # define "unexposed" group
   output$exp0_panel_x <- renderText({
     switch(
       input$cohort,
@@ -139,7 +131,10 @@ server <- function(input, output, session) {
       hc_legend(title = list(text = "Region")) %>%
       hc_xAxis(title = list(text = "Month")) %>%
       hc_yAxis(title = list(text = "Number of New Users")) %>% 
-      hc_colors(region_colors)
+      hc_title(text = "<strong>Number of New Users in Each Month</strong>") %>% 
+      hc_colors(region_colors) %>%
+      hc_chart(backgroundColor = "#FFFFFF") 
+    
   })
   
   # exposed patients only
@@ -155,7 +150,9 @@ server <- function(input, output, session) {
       hc_legend(title = list(text = "Region")) %>%
       hc_xAxis(title = list(text = "Month")) %>%
       hc_yAxis(title = list(text = "Number of New Users")) %>%
-      hc_colors(region_colors)
+      hc_title(text = "<strong>Number of New Users in Each Month</strong>") %>% 
+      hc_colors(region_colors) %>%
+      hc_chart(backgroundColor = "#FFFFFF")
     
   })
   
@@ -172,7 +169,9 @@ server <- function(input, output, session) {
       hc_legend(title = list(text = "Region")) %>%
       hc_xAxis(title = list(text = "Month")) %>%
       hc_yAxis(title = list(text = "Number of New Users")) %>% 
-      hc_colors(region_colors)
+      hc_title(text = "<strong>Number of New Users in Each Month</strong>") %>% 
+      hc_colors(region_colors) %>%
+      hc_chart(backgroundColor = "#FFFFFF")
   })
   
   # plot info
@@ -198,13 +197,15 @@ server <- function(input, output, session) {
              y = prop,
              x = cov_name,
              name = region,
-             group = region,
+             group = region
            ))  %>%
       hc_tooltip(pointFormat = "<b>{point.cov_name}</b><br>Pct: {point.prop}") %>%
       hc_legend(title = list(text = "Region")) %>%
       hc_xAxis(title = list(text = "Covariate")) %>%
       hc_yAxis(title = list(text = "Proportion (%)")) %>% 
-      hc_colors(region_colors)
+      hc_title(text = "<strong>Proportion of Patients with Covariates</strong>") %>% 
+      hc_colors(region_colors) %>%
+      hc_chart(backgroundColor = "#FFFFFF")
     
   })
   
@@ -228,7 +229,9 @@ server <- function(input, output, session) {
       hc_legend(title = list(text = "Region")) %>%
       hc_xAxis(title = list(text = "Covariate")) %>%
       hc_yAxis(title = list(text = "Proportion (%)")) %>% 
-      hc_colors(region_colors)
+      hc_title(text = "<strong>Proportion of Patients with Covariates</strong>") %>% 
+      hc_colors(region_colors) %>%
+      hc_chart(backgroundColor = "#FFFFFF")
   })
   
   # unexposed patients only
@@ -251,7 +254,9 @@ server <- function(input, output, session) {
       hc_legend(title = list(text = "Region")) %>%
       hc_xAxis(title = list(text = "Covariate")) %>%
       hc_yAxis(title = list(text = "Proportion (%)")) %>% 
-      hc_colors(region_colors)
+      hc_title(text = "<strong>Proportion of Patients with Covariates</strong>") %>% 
+      hc_colors(region_colors) %>%
+      hc_chart(backgroundColor = "#FFFFFF")
   })
   
   # plot info
@@ -284,7 +289,9 @@ server <- function(input, output, session) {
       hc_legend(title = list(text = "Region")) %>%
       hc_xAxis(title = list(text = "Covariate")) %>%
       hc_yAxis(title = list(text = "Odds Ratio")) %>% 
-      hc_colors(region_colors)
+      hc_title(text = "<strong>Propensity Score Coefficients</strong>") %>% 
+      hc_colors(region_colors) %>%
+      hc_chart(backgroundColor = "#FFFFFF")
   })
   
   # plot info
@@ -471,7 +478,9 @@ server <- function(input, output, session) {
                    )
                  )
                )) %>% 
-      hc_colors(region_colors)
+      hc_title(text = "<strong>Standardized Mean Differences</strong>") %>% 
+      hc_colors(region_colors) %>%
+      hc_chart(backgroundColor = "#FFFFFF")
   })
   
   # plot info
@@ -502,7 +511,10 @@ server <- function(input, output, session) {
       hc_legend(title = list(text = "Region")) %>%
       hc_xAxis(title = list(text = "Month")) %>%
       hc_yAxis(title = list(text = "IR per 100 years")) %>% 
-      hc_colors(region_colors)
+      hc_title(text = "<strong>Incidence Rate</strong>") %>% 
+      hc_colors(region_colors) %>%
+      hc_chart(backgroundColor = "#FFFFFF")
+    
   })
   
   # plot info
@@ -515,7 +527,7 @@ server <- function(input, output, session) {
   })
   
   # Hazard ratios
-  # ITT (30-days grace period)
+  # ITT (no patients censored for discontinuing treatment)
   output$hr_itt_plot <- renderPlotly({
     filtered_data <- hr_main %>%
       filter(outcome == input$outcome &
@@ -533,20 +545,57 @@ server <- function(input, output, session) {
       ) + 
         geom_point() + 
         theme_bw() +
-        geom_errorbarh(aes(xmin = hr_ci_lower, xmax = hr_ci_upper, height = 0.05)) +
+        geom_errorbarh(aes(xmin = hr_ci_lower, xmax = hr_ci_upper, height = 0.05)) + # add CIs
+        geom_vline(xintercept = 1, linetype = "dashed", color = "black", linewidth = 1) + # add HR of 1
         labs(
           x = "HR (95% CI)",
           y = "Region",
           color = "Region"
         ) +
-        scale_color_manual(values = region_colors)
+        scale_color_manual(values = region_colors) +
+        ggtitle("Hazard Ratio (ITT)") +
+        theme(
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 18),  
+          axis.title.x = element_text(size = 16), 
+          axis.title.y = element_text(size = 16), 
+          axis.text.x = element_text(size = 14),
+          axis.text.y = element_text(size = 14),
+          legend.title = element_text(size = 14),
+          legend.text = element_text(size = 12)
+        ) +
+        scale_x_continuous(trans = "log", labels = scales::number_format(accuracy = 0.01)) # plot on a log scale with 2 decimals
       )
+    
+    # the default quality of plots downloaded using plotly (from the browser) is poor
+    # so i configured the download options
+    # and also increase font size and add margins around the plot
+    
+    # add margins around plot
+    p <- p %>% layout(
+      margin = list(
+        t = 100,
+        b = 100,
+        l = 100,
+        r = 100
+      )
+    )
+    
+    # configure download options
+    p <- config(p, 
+                toImageButtonOptions = list(
+                  format = 'png', 
+                  filename = 'hazard_ratio_itt',
+                  height = 800, # after testing this was the min resolution needed to maintain plot quality
+                  width = 1600,
+                  scale = 2
+                )
+    )
     
     p
     
   })
   
-  # AT (30-day grace period)
+  # AT (with 30-day grace period to define treatment discontinuation)
   output$hr_at_plot <- renderPlotly({
     filtered_data <- hr_main %>%
       filter(outcome == input$outcome &
@@ -565,19 +614,52 @@ server <- function(input, output, session) {
         geom_point() + 
         theme_bw() +
         geom_errorbarh(aes(xmin = hr_ci_lower, xmax = hr_ci_upper, height = 0.05)) +
+        geom_vline(xintercept = 1, linetype = "dashed", color = "black", linewidth = 1) + 
         labs(
           x = "HR (95% CI)",
           y = "Region",
           color = "Region"
         ) +
-        scale_color_manual(values = region_colors)
+        scale_color_manual(values = region_colors) +
+        ggtitle("Hazard Ratio (AT with 30-day grace period)") +
+        theme(
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 18),  
+          axis.title.x = element_text(size = 16), 
+          axis.title.y = element_text(size = 16), 
+          axis.text.x = element_text(size = 14),
+          axis.text.y = element_text(size = 14),
+          legend.title = element_text(size = 14),
+          legend.text = element_text(size = 12)
+        ) +
+        scale_x_continuous(trans = "log", labels = scales::number_format(accuracy = 0.01))
+      )
+    
+    # add margins around plot
+    p <- p %>% layout(
+      margin = list(
+        t = 100,
+        b = 100,
+        l = 100,
+        r = 100
+      )
+    )
+    
+    # configure download options
+    p <- config(p, 
+                toImageButtonOptions = list(
+                  format = 'png', 
+                  filename = 'hazard_ratio_at_30_days',
+                  height = 800,
+                  width = 1600,
+                  scale = 2
+                )
     )
     
     p
     
   })
   
-  # AT (90-day grace period)
+  # AT (sensitivity analysis with 90-day grace period to define treatment discontinuation)
   output$hr_sens_plot <- renderPlotly({
     filtered_data <- hr_sens %>%
       filter(outcome == input$outcome &
@@ -593,12 +675,45 @@ server <- function(input, output, session) {
         )
       ) + geom_point() + theme_bw() +
         geom_errorbarh(aes(xmin = hr_ci_lower, xmax = hr_ci_upper, height = 0.05)) +
+        geom_vline(xintercept = 1, linetype = "dashed", color = "black", linewidth = 1) +
         labs(
           x = "HR (95% CI)",
           y = "Region",
           color = "Region"
         ) +
-        scale_color_manual(values = region_colors)
+        scale_color_manual(values = region_colors) +
+        ggtitle("Hazard Ratio (AT with 90-day grace period)") +
+        theme(
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 18),  
+          axis.title.x = element_text(size = 16), 
+          axis.title.y = element_text(size = 16), 
+          axis.text.x = element_text(size = 14),
+          axis.text.y = element_text(size = 14),
+          legend.title = element_text(size = 14),
+          legend.text = element_text(size = 12)
+        ) +
+        scale_x_continuous(trans = "log", labels = scales::number_format(accuracy = 0.01))
+    )
+    
+    # add margins around plot
+    p <- p %>% layout(
+      margin = list(
+        t = 100,
+        b = 100,
+        l = 100,
+        r = 100
+      )
+    )
+    
+    # configure download options
+    p <- config(p, 
+                toImageButtonOptions = list(
+                  format = 'png', 
+                  filename = 'hazard_ratio_at_90_days',
+                  height = 800,
+                  width = 1600,
+                  scale = 2
+                )
     )
     
     p
@@ -608,7 +723,7 @@ server <- function(input, output, session) {
   observeEvent(input$info_hr, {
     shinyalert(
       "Hazard Ratio",
-      "These forest plots show the estimated IPTW-weighted hazard ratio of the event and corresponding 95% confidence intervals. You can view results for the intention-to-treat anlaysis (ITT) and the as-treated analysis (AT) using different grace periods to define treatment discontinuation.",
+      "These forest plots show the estimated IPTW-weighted hazard ratio of the event and corresponding 95% confidence intervals. The x-axis is on a log-scale. You can view results for the intention-to-treat anlaysis (ITT) and the as-treated analysis (AT) using different grace periods to define treatment discontinuation.",
       type = "info"
     )
   })
@@ -642,13 +757,43 @@ server <- function(input, output, session) {
           slope = 1,
           linetype = 'dashed'
         ) +
-        xlim(find_lim(plot_data)) + ylim(find_lim(plot_data)) +
         labs(
           x = "ITT",
           y = "AT",
           color = "Region"
         ) +
-        scale_color_manual(values = region_colors)
+        scale_color_manual(values = region_colors) +
+        ggtitle("Intention-to-Treat vs As Treated Hazard Ratio") +
+        theme(
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 18),  
+          axis.title.x = element_text(size = 16), 
+          axis.title.y = element_text(size = 16), 
+          axis.text.x = element_text(size = 14),
+          axis.text.y = element_text(size = 14),
+          legend.title = element_text(size = 14),
+          legend.text = element_text(size = 12)
+        )
+      )
+    
+    # add margins around plot
+    p <- p %>% layout(
+      margin = list(
+        t = 100,
+        b = 100,
+        l = 100,
+        r = 100
+      )
+    )
+    
+    # configure download options
+    p <- config(p, 
+                toImageButtonOptions = list(
+                  format = 'png', 
+                  filename = 'hazard_ratio_itt_vs_at',
+                  height = 800,
+                  width = 1200,
+                  scale = 2
+                )
     )
     
     p
@@ -682,7 +827,10 @@ server <- function(input, output, session) {
       hc_legend(title = list(text = "Region")) %>%
       hc_xAxis(title = list(text = "Covariate")) %>%
       hc_yAxis(title = list(text = "Bias")) %>% 
-      hc_colors(region_colors)
+      hc_title(text = "<strong>Marginal Bias Terms</strong>") %>% 
+      hc_colors(region_colors) %>%
+      hc_chart(backgroundColor = "#FFFFFF")
+    
   })
   
   # plot info
@@ -722,14 +870,44 @@ server <- function(input, output, session) {
           slope = 1,
           linetype = 'dashed'
         ) +
-        xlim(find_lim(filtered_data)) + ylim(find_lim(filtered_data)) +
         labs(
           fill = 'Region',
           x = "≥65",
           y = "<65",
           color = "Region"
         ) +
-        scale_color_manual(values = region_colors)
+        scale_color_manual(values = region_colors) +
+        ggtitle("Hazard Ratio in Subgroups by Age") +
+        theme(
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 18),  
+          axis.title.x = element_text(size = 16), 
+          axis.title.y = element_text(size = 16), 
+          axis.text.x = element_text(size = 14),
+          axis.text.y = element_text(size = 14),
+          legend.title = element_text(size = 14),
+          legend.text = element_text(size = 12)
+        )
+      )
+    
+    # add margins around plot
+    p <- p %>% layout(
+      margin = list(
+        t = 100,
+        b = 100,
+        l = 100,
+        r = 100
+      )
+    )
+    
+    # configure download options
+    p <- config(p, 
+                toImageButtonOptions = list(
+                  format = 'png', 
+                  filename = 'hazard_ratio_young_vs_old',
+                  height = 800,
+                  width = 1200,
+                  scale = 2
+                )
     )
     
     p
@@ -762,14 +940,44 @@ server <- function(input, output, session) {
           slope = 1,
           linetype = 'dashed'
         ) +
-        xlim(find_lim(filtered_data)) + ylim(find_lim(filtered_data)) +
         labs(
           fill = 'Region',
           x = "Female",
           y = "Male",
           color = "Region"
         ) +
-        scale_color_manual(values = region_colors)
+        scale_color_manual(values = region_colors) +
+        ggtitle("Hazard Ratio in Subgroups by Sex") +
+        theme(
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 18),  
+          axis.title.x = element_text(size = 16), 
+          axis.title.y = element_text(size = 16), 
+          axis.text.x = element_text(size = 14),
+          axis.text.y = element_text(size = 14),
+          legend.title = element_text(size = 14),
+          legend.text = element_text(size = 12)
+        )
+    )
+    
+    # add margins around plot
+    p <- p %>% layout(
+      margin = list(
+        t = 100,
+        b = 100,
+        l = 100,
+        r = 100
+      )
+    )
+    
+    # configure download options
+    p <- config(p, 
+                toImageButtonOptions = list(
+                  format = 'png', 
+                  filename = 'hazard_ratio_male_vs_female',
+                  height = 800,
+                  width = 1200,
+                  scale = 2
+                )
     )
     
     p
@@ -802,14 +1010,44 @@ server <- function(input, output, session) {
           slope = 1,
           linetype = 'dashed'
         ) +
-        xlim(find_lim(filtered_data)) + ylim(find_lim(filtered_data)) +
         labs(
           fill = 'Region',
           x = "2020",
           y = "2019",
           color = "Region"
         ) +
-        scale_color_manual(values = region_colors)
+        scale_color_manual(values = region_colors) +
+        ggtitle("Hazard Ratio in Subgroups by Year of Cohort Entry") +
+        theme(
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 18),  
+          axis.title.x = element_text(size = 16), 
+          axis.title.y = element_text(size = 16), 
+          axis.text.x = element_text(size = 14),
+          axis.text.y = element_text(size = 14),
+          legend.title = element_text(size = 14),
+          legend.text = element_text(size = 12)
+        )
+    )
+    
+    # add margins around plot
+    p <- p %>% layout(
+      margin = list(
+        t = 100,
+        b = 100,
+        l = 100,
+        r = 100
+      )
+    )
+    
+    # configure download options
+    p <- config(p, 
+                toImageButtonOptions = list(
+                  format = 'png', 
+                  filename = 'hazard_ratio_2020_vs_2019',
+                  height = 800,
+                  width = 1200,
+                  scale = 2
+                )
     )
     
     p
@@ -842,15 +1080,45 @@ server <- function(input, output, session) {
           slope = 1,
           linetype = 'dashed'
         ) +
-        xlim(find_lim(filtered_data)) + ylim(find_lim(filtered_data)) +
         labs(
           fill = 'Region',
           x = "2021",
           y = "2019",
           color = "Region"
         ) +
-        scale_color_manual(values = region_colors)
+        scale_color_manual(values = region_colors) +
+        ggtitle("Hazard Ratio in Subgroups by Year of Cohort Entry") +
+        theme(
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 18),  
+          axis.title.x = element_text(size = 16), 
+          axis.title.y = element_text(size = 16), 
+          axis.text.x = element_text(size = 14),
+          axis.text.y = element_text(size = 14),
+          legend.title = element_text(size = 14),
+          legend.text = element_text(size = 12)
+        )
     ) 
+    
+    # add margins around plot
+    p <- p %>% layout(
+      margin = list(
+        t = 100,
+        b = 100,
+        l = 100,
+        r = 100
+      )
+    )
+    
+    # configure download options
+    p <- config(p, 
+                toImageButtonOptions = list(
+                  format = 'png', 
+                  filename = 'hazard_ratio_2021_vs_2019',
+                  height = 800,
+                  width = 1200,
+                  scale = 2
+                )
+    )
     
     p
   })
@@ -882,14 +1150,44 @@ server <- function(input, output, session) {
           slope = 1,
           linetype = 'dashed'
         ) +
-        xlim(find_lim(filtered_data)) + ylim(find_lim(filtered_data)) +
         labs(
           fill = 'Region',
           x = "2022",
           y = "2019",
           color = "Region"
         ) + 
-        scale_color_manual(values = region_colors)
+        scale_color_manual(values = region_colors) +
+        ggtitle("Hazard Ratio in Subgroups by Year of Cohort Entry") +
+        theme(
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 18),  
+          axis.title.x = element_text(size = 16), 
+          axis.title.y = element_text(size = 16), 
+          axis.text.x = element_text(size = 14),
+          axis.text.y = element_text(size = 14),
+          legend.title = element_text(size = 14),
+          legend.text = element_text(size = 12)
+        )
+    )
+    
+    # add margins around plot
+    p <- p %>% layout(
+      margin = list(
+        t = 100,
+        b = 100,
+        l = 100,
+        r = 100
+      )
+    )
+    
+    # configure download options
+    p <- config(p, 
+                toImageButtonOptions = list(
+                  format = 'png', 
+                  filename = 'hazard_ratio_2022_vs_2019',
+                  height = 800,
+                  width = 1200,
+                  scale = 2
+                )
     )
     
     p
@@ -899,7 +1197,7 @@ server <- function(input, output, session) {
   observeEvent(input$info_subgroup, {
     shinyalert(
       "Subgroup Analyses",
-      "These plots show the IPTW-weighted hazard ratios comparing different subgroups. You can select whether to view results for the intention-to-treat (ITT) or as-treated (AT) analyses. The dotted line represents the identity line, along which estimates in both subgroups being compared are equal.",
+      "These plots show the IPTW-weighted hazard ratios comparing different subgroups (by age, sex, and year of cohort entry). You can select whether to view results for the intention-to-treat (ITT) or as-treated (AT) analyses. The dotted line represents the identity line, along which estimates in both subgroups being compared are equal.",
       type = "info"
     )
   })

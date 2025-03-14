@@ -11,6 +11,8 @@ library(ggplot2)
 library(gridExtra)
 library(shinyalert)
 library(shinyWidgets)
+library(webshot)
+library(htmlwidgets)
 
 #### LOAD DATA ####
 
