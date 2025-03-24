@@ -1,35 +1,13 @@
-#### DEFINE PAGES AND TABS FOR THE APP ####
+## ---------------------------
+##
+## ui.R
+##
+## Purpose: Define the user interface for the app, including the homepage, sidebar, and tabs for the plots. 
+##
+## ---------------------------
 
-home_page <- tagList(
-  
-  tags$style(HTML("
-    h1 {
-      font-size: 36px;  /* Increase font size for h1 */
-    }
-    p {
-      font-size: 18px;  /* Increase font size for paragraphs */
-    }
-    ul {
-      font-size: 16px;  /* Increase font size for unordered list */
-    }
-  ")),
-  
-  h1("Distibuted Data Networks Visualization Tool"),
-  p("Distributed data networks (DDNs) and multi-database studies offer new ways of conducting health research that is rapid, rigorous, and reproducible."),
-  p("However, the study populations contained in each database may be heterogeneous in terms of event rates and confounding structures."),
-  p("This tool visualizes data from the United Kingdom, British Columbia, and Ontario for three different new-user active comparator cohorts which you can select in the sidebar, namely:"),
-  tags$ul(
-    tags$li("New users of SNRIs and SSRIs (antidepressant medications)"),
-    tags$li("New users of ARBs and ACEIs (antihypertensive medications)"),
-    tags$li("New users of SUs and SGLT2s (antidiabetic medications)"),
-    tags$li("New users of SUs and GLP-1 RAs (antidiabetic medications)"),
-    tags$li("New users of SUs and DPP-4s (antidiabetic medications)")
-  ),
-  p("For more information, visit our ",
-    tags$a(href = "https://github.com/gwenaubrac/ddn-visualization", "GitHub page", target = "_blank"),
-    "!"
-  )
-)
+
+#### DEFINE PAGES AND TABS FOR THE APP ####
 
 patient_tab <- tabPanel(
   "PATIENTS",
@@ -46,7 +24,7 @@ patient_tab <- tabPanel(
     )
   ),
   
-  ## x_by_month
+  ## PLOT 1: x_by_month (number of new users)
   fluidRow(
     column(11,
     tabBox(
@@ -135,7 +113,7 @@ patient_tab <- tabPanel(
     
   ),
 
-  # covs
+  ## PLOT 2: covs (covariates)
   fluidRow(
     column(11,
            # user can select which covariate to plot
@@ -168,7 +146,7 @@ patient_tab <- tabPanel(
            )
   ),
   
-  # ps_coef
+  ## PLOT 3: ps_coef (propensity score coefficients)
   fluidRow(
     column(11, 
            box(
@@ -197,7 +175,7 @@ patient_tab <- tabPanel(
   #   )
   # ),
   
-  # smds
+  ## PLOT 4: smds (standardized mean differences)
   fluidRow(
     column(width = 11,
            box(
@@ -234,7 +212,7 @@ outcome_tab <- tabPanel(
     )
   ),
   
-  # y_by_month 
+  ## PLOT 5: y_by_month (incidence rates)
   fluidRow(
     column(
       width = 11,
@@ -251,7 +229,7 @@ outcome_tab <- tabPanel(
     )
   ),
   
-  # hr_itt + hr_at + hr_sens (forest plots)
+  # PLOT 6: hr_itt + hr_at + hr_sens (hazard ratios)
   fluidRow(
     column(
       width = 11,
@@ -285,7 +263,7 @@ outcome_tab <- tabPanel(
     )
   ),
   
-  # marg_bias
+  ## PLOT 7: marg_bias (marginal bias terms)
   fluidRow(
     column(
       width = 11,
@@ -316,7 +294,7 @@ outcome_tab <- tabPanel(
 
   ),
   
-  # hr_age + hr_sex + hr_year
+  # PLOT 8: hr_age + hr_sex + hr_year (subgroup analyses)
   fluidRow(
     column(
       width=11,
@@ -344,7 +322,7 @@ outcome_tab <- tabPanel(
 ui <- dashboardPage(
   
   # Header
-  dashboardHeader(title = "DDN Visualization", 
+  dashboardHeader(title = tool_title, 
                   tags$li(class = "dropdown", actionButton("browser", "browser"),
                           tags$script("$('#browser').hide();")),
                   dropdownMenuOutput("messageMenu")),
@@ -362,14 +340,8 @@ ui <- dashboardPage(
         radioButtons(
           "cohort",
           label = "Select cohort",
-          choices = c(
-            "SNRI vs SSRI" = "snri_vs_ssri", 
-            "ARB vs ACEI" = "arb_vs_acei",
-            "SU vs SGLT2" = "su_vs_sglt2",
-            "SU vs GLP-1 RA" = "su_vs_glp1",
-            "SU vs DPP-4" = "su_vs_dpp4"
-          ),
-          selected = "snri_vs_ssri"
+          choices = cohort_choices,
+          selected = cohort_choices[1]
         )
       )
     )

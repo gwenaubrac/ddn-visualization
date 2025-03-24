@@ -1,37 +1,10 @@
-#### DEFINE OUTCOMES THAT CAN BE SELECTED ####
-
-# specify which outcomes can be selected and plotted
-# left-hand side: name that appears in app (label)
-# right-hand side: how it is referenced in the code/data
-
-all_outcomes <- c(
-  "All-cause mortality" = "death", 
-  "Stroke" = "stroke",
-  "Hypoglycemia (hospitalization)" = "hypoglycemia_hosp",
-  "Diabetic amputation" = "amputation",
-  "Myocardial infarction" = "mi",
-  "COPD exacerbation" = "copd_exacerbation",
-  "Diabetes" = "diabetes", 
-  "Hypertension" = "hypertension",
-  "Depression" = "depression",
-  "Hyperlipidemia" = "hyperlipidemia",
-  "COPD" = "copd",
-  "Congestive Heart Failure" = "chf",
-  "End-stage renal disease" = "end_stage_renal",
-  "Retinopathy" = "retinopathy",
-  "Breast cancer screening" = "breast_cancer_screen",
-  "Colon cancer screening" = "colon_cancer_screen"
-)
-
-# if certain outcomes are specific to a cohort of medication users,
-# define it here:
-cohort_outcomes <- list(
-  snri_vs_ssri = all_outcomes[!all_outcomes %in% c("hypoglycemia_hosp", "amputation", "retinopathy")],
-  arb_vs_acei = all_outcomes[!all_outcomes %in% c("hypoglycemia_hosp", "amputation", "hypertension", "retinopathy")],
-  su_vs_sglt2 = all_outcomes[!all_outcomes %in% c("diabetes")],
-  su_vs_glp1 = all_outcomes[!all_outcomes %in% c("diabetes")],
-  su_vs_dpp4 = all_outcomes[!all_outcomes %in% c("diabetes")]
-)
+## ---------------------------
+##
+## server.R
+##
+## Purpose: Link the UI elements to the data and specify other back-end elements. 
+##
+## ---------------------------
 
 #### APP SERVER ####
 server <- function(input, output, session) {
@@ -42,17 +15,17 @@ server <- function(input, output, session) {
                    from = "Github",
                    message = "Documentation, Source, Citation",
                    icon = icon("github"),
-                   href = "https://github.com/gwenaubrac/ddn-visualization"),
+                   href = github_link),
                  messageItem(
                    from = "Issues",
                    message = "Report Issues",
                    icon = icon("exclamation"),
-                   href = "https://github.com/gwenaubrac/ddn-visualization/issues"),
+                   href = paste0(github_link, "/issues")),
                  messageItem(
                    from = "Contact",
                    message = "Contact Us",
                    icon = icon("envelope"),
-                   href = "mailto:gwen.aubrac@mail.mcgill.ca"),
+                   href = email_address),
                  badgeStatus = NULL,
                  headerText = "App Information",
                  icon = icon("info-circle") 
@@ -66,56 +39,23 @@ server <- function(input, output, session) {
                       choices = cohort_outcomes[[input$cohort]])
   })
   
-  # Update tab names for exposed/unexposed based on cohort selected
+  ## Generate "PATIENTS" plots
+  
+  ## PLOT 1: x_by_month (number of new users)
+  
   # define "exposed" group
   output$exp1_panel_x <- renderText({
-    switch(
-      input$cohort,
-      'snri_vs_ssri' = 'SSRI',
-      'arb_vs_acei' = 'ACEI',
-      'su_vs_dpp4' = 'DPP-4',
-      'su_vs_sglt2' = 'SGLT2',
-      'su_vs_glp1' = 'GLP-1 RA'
-    )
+    cohort_selected <- input$cohort
+    cohort_label <- cohort_mapping_trt1[[cohort_selected]]
+    cohort_label
   })
   
   # define "unexposed" group
   output$exp0_panel_x <- renderText({
-    switch(
-      input$cohort,
-      'snri_vs_ssri' = 'SNRI',
-      'arb_vs_acei' = 'ARB',
-      'su_vs_dpp4' = 'SU',
-      'su_vs_sglt2' = 'SU',
-      'su_vs_glp1' = 'SU'
-    )
+    cohort_selected <- input$cohort
+    cohort_label <- cohort_mapping_trt0[[cohort_selected]]
+    cohort_label
   })
-  
-  output$exp1_panel_covs <- renderText({
-    switch(
-      input$cohort,
-      'snri_vs_ssri' = 'SSRI',
-      'arb_vs_acei' = 'ACEI',
-      'su_vs_dpp4' = 'DPP-4',
-      'su_vs_sglt2' = 'SGLT2',
-      'su_vs_glp1' = 'GLP-1 RA'
-    )
-  })
-  
-  output$exp0_panel_covs <- renderText({
-    switch(
-      input$cohort,
-      'snri_vs_ssri' = 'SNRI',
-      'arb_vs_acei' = 'ARB',
-      'su_vs_dpp4' = 'SU',
-      'su_vs_sglt2' = 'SU',
-      'su_vs_glp1' = 'SU'
-    )
-  })
-  
-  ## Generate "PATIENTS" plots
-  
-  # Incidence rates
   
   # all patients
   output$x_by_month_plot <- renderHighchart({
@@ -183,16 +123,16 @@ server <- function(input, output, session) {
     )
   })
   
-  # Covariates
+  ## PLOT 2: covs (covariates)
   
   # all patients
   output$covs_plot <- renderHighchart({
     filtered_data <- covs %>%
-      filter(comparison == input$cohort) %>% 
+      filter(comparison == input$cohort) %>%
       filter(cov_name %in% input$select_covar)
-    
+
     hchart(filtered_data,
-           'scatter',
+           'column',
            hcaes(
              y = prop,
              x = cov_name,
@@ -202,11 +142,11 @@ server <- function(input, output, session) {
       hc_tooltip(pointFormat = "<b>{point.cov_name}</b><br>Pct: {point.prop}") %>%
       hc_legend(title = list(text = "Region")) %>%
       hc_xAxis(title = list(text = "Covariate")) %>%
-      hc_yAxis(title = list(text = "Proportion (%)")) %>% 
-      hc_title(text = "<strong>Proportion of Patients with Covariates</strong>") %>% 
+      hc_yAxis(title = list(text = "Proportion (%)")) %>%
+      hc_title(text = "<strong>Proportion of Patients with Covariates</strong>") %>%
       hc_colors(region_colors) %>%
       hc_chart(backgroundColor = "#FFFFFF")
-    
+
   })
   
   # exposed patients only
@@ -217,7 +157,7 @@ server <- function(input, output, session) {
     
     hchart(
       filtered_data,
-      'scatter',
+      'column',
       hcaes(
         y = prop_trt1,
         x = cov_name,
@@ -242,7 +182,7 @@ server <- function(input, output, session) {
     
     hchart(
       filtered_data,
-      'scatter',
+      'column',
       hcaes(
         y = prop_trt0,
         x = cov_name,
@@ -268,7 +208,21 @@ server <- function(input, output, session) {
     )
   })
   
-  # Propensity score coefficients
+  ## PLOT 3: ps_coef (propensity score coefficients)
+  
+  # define "exposed" group
+  output$exp1_panel_covs <- renderText({
+    cohort_selected <- input$cohort
+    cohort_label <- cohort_mapping_trt1[[cohort_selected]]
+    cohort_label
+  })
+  
+  # define "unexposed" group
+  output$exp0_panel_covs <- renderText({
+    cohort_selected <- input$cohort
+    cohort_label <- cohort_mapping_trt0[[cohort_selected]]
+    cohort_label
+  })
   output$ps_coef_plot <- renderHighchart({
     
     filtered_data <- ps_coef %>%
@@ -288,7 +242,21 @@ server <- function(input, output, session) {
       hc_tooltip(pointFormat = "<b>{point.cov_name}</b><br>OR: {point.odds_ratio}") %>%
       hc_legend(title = list(text = "Region")) %>%
       hc_xAxis(title = list(text = "Covariate")) %>%
-      hc_yAxis(title = list(text = "Odds Ratio")) %>% 
+      hc_yAxis(title = list(text = "Odds Ratio"),
+               plotLines = list(
+                 list(
+                   value = 1,
+                   color = "black",
+                   dashStyle = "Dash",
+                   width = 2,
+                   zIndex = 5,
+                   label = list(
+                     text = "No Association",
+                     align = "right",
+                     x = 0,
+                     y = -5
+                   )
+                 ))) %>% 
       hc_title(text = "<strong>Propensity Score Coefficients</strong>") %>% 
       hc_colors(region_colors) %>%
       hc_chart(backgroundColor = "#FFFFFF")
@@ -298,7 +266,7 @@ server <- function(input, output, session) {
   observeEvent(input$info_ps_coef, {
     shinyalert(
       "Propensity Score Coefficient",
-      "This plot shows the exponentiated coefficient (odds ratio) of each covariate in the propensity score model. This coefficient describes the strength of the association between each covariate and the treatment.",
+      "This plot shows the exponentiated coefficient (odds ratio) of each covariate in the propensity score model. This coefficient describes the strength of the association between each covariate and the treatment compared to the reference. The reference group is the one indicated by ref in the sidebar.",
       type = "info"
     )
   })
@@ -434,7 +402,8 @@ server <- function(input, output, session) {
   #   
   # })
   
-  # Standardized mean differences
+  ## PLOT 4: smds (standardized mean differences)
+  
   output$smd_plot <- renderHighchart({
     filtered_data <- smd %>%
       filter(comparison == input$cohort) %>% 
@@ -487,14 +456,14 @@ server <- function(input, output, session) {
   observeEvent(input$info_smd, {
     shinyalert(
       "Standardized Mean Differences",
-      "This plot shows the crude standardized mean difference in the covariate distribution between treated and untreated patients. A high SMD indicates imbalance between both groups with regards to the covariate. Typically, an absolute SMD below 0.1 (indicated by the dashed line) is desired to achieve balance.",
+      "This plot shows the crude standardized mean difference in the covariate distribution between treatment groups. A high SMD indicates imbalance between both groups with regards to the covariate. Typically, an absolute SMD below 0.1 (indicated by the dashed line) is desired to achieve balance. The reference group is the one indicated by ref in the sidebar.",
       type = "info"
     )
   })
   
   ## Generate "OUTCOMES" plots
   
-  # Incidence rates
+  ## PLOT 5: y_by_month (incidence rates)
   output$y_by_month_plot <- renderHighchart({
     filtered_data <- y_by_month %>%
       filter(outcome == input$outcome &
@@ -526,7 +495,7 @@ server <- function(input, output, session) {
     )
   })
   
-  # Hazard ratios
+  ## PLOT 6: hr_itt + hr_at + hr_sens (hazard ratios)
   # ITT (no patients censored for discontinuing treatment)
   output$hr_itt_plot <- renderPlotly({
     filtered_data <- hr_main %>%
@@ -723,7 +692,7 @@ server <- function(input, output, session) {
   observeEvent(input$info_hr, {
     shinyalert(
       "Hazard Ratio",
-      "These forest plots show the estimated IPTW-weighted hazard ratio of the event and corresponding 95% confidence intervals. The x-axis is on a log-scale. You can view results for the intention-to-treat anlaysis (ITT) and the as-treated analysis (AT) using different grace periods to define treatment discontinuation.",
+      "These forest plots show the estimated IPTW-weighted hazard ratio of the event and corresponding 95% confidence intervals. The x-axis is on a log-scale. You can view results for the intention-to-treat anlaysis (ITT) and the as-treated analysis (AT) using different grace periods to define treatment discontinuation. The reference group is the one indicated by ref in the sidebar.",
       type = "info"
     )
   })
@@ -803,12 +772,12 @@ server <- function(input, output, session) {
   observeEvent(input$info_itt_vs_at, {
     shinyalert(
       "Intention-to-Treat vs As-Treated",
-      "This plot compares the IPTW-weighted estimates (and confidence intervals) for the intention-to-treat (ITT) and the as-treated analysis (AT), in which patients are censored when they discontinue their treatment for 30 days or more. The dotted line represents the identity line, along which ITT and AT estimates are equal.",
+      "This plot compares the IPTW-weighted estimates (and confidence intervals) for the intention-to-treat (ITT) and the as-treated analysis (AT), in which patients are censored when they discontinue their treatment for 30 days or more. The dotted line represents the identity line, along which ITT and AT estimates are equal. The reference group is the one indicated by ref in the sidebar.",
       type = "info"
     )
   })
   
-  # Marginal bias terms
+  ## PLOT 7: marg_bias (marginal bias terms)
   output$marg_bias_plot <- renderHighchart({
     filtered_data <- marg_bias %>%
       filter(outcome == input$outcome &
@@ -837,12 +806,12 @@ server <- function(input, output, session) {
   observeEvent(input$info_marg_bias, {
     shinyalert(
       "Marginal Bias Terms",
-      "This plot shows the marginal bias terms.",
+      "This plot shows the marginal bias terms of each covariate with the outcome. The reference group is the one indicated by ref in the sidebar.",
       type = "info"
     )
   })
   
-  # Subgroup analyses
+  ## PLOT 8: hr_age + hr_sex + hr_year (subgroup analyses)
   
   # by age
   output$hr_age_plot <- renderPlotly({
@@ -1197,7 +1166,7 @@ server <- function(input, output, session) {
   observeEvent(input$info_subgroup, {
     shinyalert(
       "Subgroup Analyses",
-      "These plots show the IPTW-weighted hazard ratios comparing different subgroups (by age, sex, and year of cohort entry). You can select whether to view results for the intention-to-treat (ITT) or as-treated (AT) analyses. The dotted line represents the identity line, along which estimates in both subgroups being compared are equal.",
+      "These plots show the IPTW-weighted hazard ratios comparing different subgroups (by age, sex, and year of cohort entry). You can select whether to view results for the intention-to-treat (ITT) or as-treated (AT) analyses. The dotted line represents the identity line, along which estimates in both subgroups being compared are equal. The reference group is the one indicated by ref in the sidebar.",
       type = "info"
     )
   })
