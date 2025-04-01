@@ -210,7 +210,6 @@ covs <- covs %>%
     prop_trt0 = if_else(count <= 5, NA, prop_trt0)
     )
 
-# Ensure missing values are encoded as NAs
 write_xlsx(covs, 'covs.xlsx')
 write_xlsx(ps_coef, 'ps_coef.xlsx')
 #saveRDS(ps_bal, 'ps_bal.rds') # save as RDS due to file size

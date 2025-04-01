@@ -806,7 +806,7 @@ server <- function(input, output, session) {
   observeEvent(input$info_marg_bias, {
     shinyalert(
       "Marginal Bias Terms",
-      "This plot shows the marginal bias terms of each covariate with the outcome. The reference group is the one indicated by ref in the sidebar.",
+      "This plot shows the marginal bias terms of each covariate with the outcome, which is the possible amount of confounding the covariate could adjust for in a multiplicative model given a binary exposure and outcome after adjusting for demographic variables. The reference group is the one indicated by ref in the sidebar.",
       type = "info"
     )
   })

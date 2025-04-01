@@ -18,7 +18,7 @@
 ## - c) hr_year: hazard ratio in subgroups by year of entry (2019-2022)
 ## - d) hr_age: hazard ratio in subgroups by age (<65, >=65)
 ## - e) hr_sens: hazard ratio for sensitivity comparison (using 90-day grace period)
-## - f) marg_bias: marginal bias terms
+## - f) marg_bias: marginal bias terms (for binary comorbidities only)
 ## - g) y_by_month: crude monthly outcome incidence rate
 ##
 ## Author: Gwen Aubrac
@@ -145,7 +145,7 @@ ps_coef %<>% mutate(
 ps_coef$region <- region
 ps_coef$comparison <- comparison
 
-write_xlsx(ps_coef, paste(path_res, 'ps_coef.xlsx', sep = '/'))
+#write_xlsx(ps_coef, paste(path_res, 'ps_coef.xlsx', sep = '/'))
 rm(ps_fit, ps_model)
 
 ps_bal <- cohort %>% 
@@ -155,7 +155,7 @@ ps_bal$region <- region
 ps_bal$comparison <- comparison
 
 # save as RDS due to file size
-saveRDS(ps_bal, paste(path_res, 'ps_bal.rds', sep = '/'))
+#saveRDS(ps_bal, paste(path_res, 'ps_bal.rds', sep = '/'))
 
 ## b) x_by_month
 x_by_month <- cohort %>% 
@@ -165,7 +165,7 @@ x_by_month <- cohort %>%
 x_by_month$region <- region
 x_by_month$comparison <- comparison
 
-write_xlsx(x_by_month, paste(path_res, 'x_by_month.xlsx', sep = '/'))
+#write_xlsx(x_by_month, paste(path_res, 'x_by_month.xlsx', sep = '/'))
 
 ## c) covs
 
@@ -313,7 +313,7 @@ covs %<>%
 covs$region <- region
 covs$comparison <- comparison
 
-write_xlsx(covs, paste(path_res, 'covs.xlsx', sep = '/'))
+#write_xlsx(covs, paste(path_res, 'covs.xlsx', sep = '/'))
 
 rm(
   covs_trt1,
@@ -371,7 +371,7 @@ smd$comparison <- comparison
 
 smd %<>% mutate(SMD = round(SMD, 3))
 
-write_xlsx(smd, paste(path_res, 'smd.xlsx', sep = '/'))
+#write_xlsx(smd, paste(path_res, 'smd.xlsx', sep = '/'))
 rm(cohort_covs, bal_tab, smd_bin, smd_cat)
 
 #### 2. OUTCOME-SPECIFIC DESCRIPTIVE DATA ####
@@ -520,8 +520,7 @@ for (outcome in outcome_list) {
   hr_main %<>%
     mutate(across(where(is.numeric), ~ round(., 3)))
   
-  write_xlsx(hr_main,
-             paste(path_res, outcome, 'hr_main.xlsx', sep = '/'))
+  #write_xlsx(hr_main, paste(path_res, outcome, 'hr_main.xlsx', sep = '/'))
   rm(cox_itt, cox_at)
   
   
@@ -600,7 +599,7 @@ for (outcome in outcome_list) {
     hr_sex %<>%
       mutate(across(where(is.numeric), ~ round(., 3)))
     
-    write_xlsx(hr_sex, paste(path_res, outcome, 'hr_sex.xlsx', sep = '/'))
+    #write_xlsx(hr_sex, paste(path_res, outcome, 'hr_sex.xlsx', sep = '/'))
     rm(cox_itt_male, cox_at_male, cox_itt_female, cox_at_female)
   }
   
@@ -736,7 +735,7 @@ for (outcome in outcome_list) {
   hr_year %<>%
     mutate(across(where(is.numeric), ~ round(., 3)))
   
-  write_xlsx(hr_year, paste(path_res, outcome, 'hr_year.xlsx', sep = '/'))
+  #write_xlsx(hr_year, paste(path_res, outcome, 'hr_year.xlsx', sep = '/'))
   rm(cox_itt_2019, cox_at_2019, cox_itt_2020, cox_at_2020, cox_itt_2021, cox_at_2021, cox_itt_2022, cox_at_2022)
   
   ## d) hr_age
@@ -813,7 +812,7 @@ for (outcome in outcome_list) {
   hr_age %<>%
     mutate(across(where(is.numeric), ~ round(., 3)))
   
-  write_xlsx(hr_age, paste(path_res, outcome, 'hr_age.xlsx', sep = '/'))
+  #write_xlsx(hr_age, paste(path_res, outcome, 'hr_age.xlsx', sep = '/'))
   rm(cox_itt_old, cox_at_old, cox_itt_young, cox_at_young)
   
   ## e) hr_sens
@@ -877,11 +876,11 @@ for (outcome in outcome_list) {
   hr_sens %<>%
     mutate(across(where(is.numeric), ~ round(., 3)))
   
-  write_xlsx(hr_sens,
-             paste(path_res, outcome, 'hr_sens.xlsx', sep = '/'))
+  #write_xlsx(hr_sens, paste(path_res, outcome, 'hr_sens.xlsx', sep = '/'))
   rm(cox_at_sens, cohort_analytic_sens)
   
   ## f) marg_bias
+  # only for binary covariates/comorbidities
   marg_bias <- data.frame(
     cov_name = NA,
     freq_exp0 = 0,
@@ -902,55 +901,7 @@ for (outcome in outcome_list) {
       ungroup() %>%
       mutate(freq = num_patients / num_patients_trt)
     
-    # a) CATEGORICAL COV
-    if (cov %in% cat_variables) {
-      prop_with_cov %<>% select(!!sym(cov), trt, freq)
-      
-      # split into groups for each level of the covariate
-      cov_groups <- split(prop_with_cov, prop_with_cov[[cov]])
-      
-      for (i in 1:length(cov_groups)) {
-        prop_with_cov_i <- cov_groups[[i]]
-        cov_i <- names(cov_groups[i])
-        prop_with_cov_i %<>%
-          pivot_wider(
-            names_from = trt,
-            values_from = freq,
-            names_prefix = 'freq_exp'
-          )
-        
-        prop_with_cov_i %<>%
-          select(-!!sym(cov))
-        
-        # get probability of event associated with covariate
-        model <- glm(
-          reformulate(paste0(cov, "==", "'", cov_i, "'"), 'event'),
-          data = cohort_analytic,
-          family = binomial(link = 'logit')
-        )
-        
-        risk_ratio_cov_i <- tidy(model)
-        
-        risk_ratio_cov_i %<>%
-          filter(term != '(Intercept)') %>%
-          mutate(risk_ratio = exp(estimate)) %>%
-          mutate(cov_name = paste(cov, cov_i, sep = '_')) %>%
-          select(cov_name, estimate, risk_ratio)
-        
-        # merge results
-        marg_bias_cov_i <- bind_cols(prop_with_cov_i, risk_ratio_cov_i)
-        marg_bias <- bind_rows(marg_bias, marg_bias_cov_i)
-        rm(cov_i,
-           prop_with_cov_i,
-           model,
-           risk_ratio_cov_i,
-           marg_bias_cov_i)
-      }
-      
-    }
-    
-    # b) BINARY COV
-    if (!(cov %in% cat_variables)) {
+    if (!(cov %in% cat_variables & cov != "male")) {
       prop_with_cov %<>%
         filter(!!sym(cov) == 1) %>%
         select(trt, freq) %>%
@@ -959,6 +910,9 @@ for (outcome in outcome_list) {
           values_from = freq,
           names_prefix = 'freq_exp'
         )
+      
+      formula_str <- paste(cov, "age_group", "male", "ethnicity", "deprivation", sep = "+")
+      formula <- reformulate(formula_str, response = "event")
       
       model <- glm(reformulate(cov, 'event'),
                    data = cohort_analytic,
@@ -973,6 +927,7 @@ for (outcome in outcome_list) {
       marg_bias_cov <- bind_cols(prop_with_cov, risk_ratio_cov)
       marg_bias <- bind_rows(marg_bias, marg_bias_cov)
       rm(risk_ratio_cov, model, prop_with_cov)
+      
       
     }
   }
@@ -1005,8 +960,7 @@ for (outcome in outcome_list) {
   marg_bias %<>%
     select(-freq_exp0, -freq_exp1)
   
-  write_xlsx(marg_bias,
-             paste(path_res, outcome, 'marg_bias.xlsx', sep = '/'))
+  write_xlsx(marg_bias, paste(path_res, outcome, 'marg_bias.xlsx', sep = '/'))
   rm(cov, i, marg_bias_cov)
   
   ## g) y_by_month
@@ -1198,8 +1152,7 @@ for (outcome in outcome_list) {
   y_by_month_final %<>%
     mutate(across(where(is.numeric), ~ round(., 3)))
   
-  write_xlsx(y_by_month_final,
-             paste(path_res, outcome, 'y_by_month.xlsx', sep = '/'))
+  #write_xlsx(y_by_month_final, paste(path_res, outcome, 'y_by_month.xlsx', sep = '/'))
   rm(events_per_month,
      pt_per_month,
      pt_month_i,
