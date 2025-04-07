@@ -138,9 +138,9 @@ home_page <- tagList(
   ")),
   
   h1("Distibuted Data Networks Visualization Tool"),
-  p("Distributed data networks (DDNs) and multi-database studies offer new ways of conducting health research that is rapid, rigorous, and reproducible."),
+  p("Distributed data networks (DDNs) and multi-database studies offer a new way of conducting health research that is rapid, rigorous, and reproducible."),
   p("However, the study populations contained in each database may be heterogeneous in terms of event rates and confounding structures."),
-  p("This tool visualizes data from the United Kingdom, British Columbia, and Ontario for three different new-user active comparator cohorts which you can select in the sidebar, namely:"),
+  p("This tool visualizes data from the United Kingdom, British Columbia, and Ontario for different new-user active comparator cohorts which you can select in the sidebar, namely:"),
   tags$ul(
     tags$li("New users of SNRIs and SSRIs (antidepressant medications)"),
     tags$li("New users of ARBs and ACEIs (antihypertensive medications)"),
@@ -148,6 +148,7 @@ home_page <- tagList(
     tags$li("New users of SUs and GLP-1 RAs (antidiabetic medications)"),
     tags$li("New users of SUs and DPP-4s (antidiabetic medications)")
   ),
+  p("If you like this tool and want to adapt it to your own projects, we have a guide that explains how to create the required data tables and set up the app!"),
   p("For more information, visit our ",
     tags$a(href = "https://github.com/gwenaubrac/ddn-visualization", "GitHub page", target = "_blank"),
     "!"

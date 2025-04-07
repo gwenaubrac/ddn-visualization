@@ -3,7 +3,9 @@ title: "sample_vis"
 author: "Gwen Aubrac"
 date: "2024-12"
 output:
-  pdf_document: default
+  pdf_document: 
+    includes:
+      in_header: "wrap_code.tex"
   html_document: default
 ---
 
@@ -21,10 +23,10 @@ pre {
 </style>
 
 ```{r, include = FALSE, echo = FALSE}
-library(knitr, quietly = TRUE)
 library(dplyr, quietly = TRUE)
 library(magrittr, quietly = TRUE)
-opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+library(knitr)
+opts_chunk$set(tidy.opts=list(width.cutoff=60), tidy=TRUE)
 options(dplyr.summarise.inform = FALSE)
 ```
 
@@ -72,7 +74,8 @@ n <- 2000
 # patient: contains id, birth date, sex, death date, regimen start, regimen end
 patient_ids <- 1:n
 
-birth_date <- as.Date('1930-01-01') + sample(0:(as.numeric(as.Date('2000-01-01')) - as.numeric(as.Date('1930-01-01'))), n, replace = TRUE)
+birth_date <- 
+  as.Date('1930-01-01') + sample(0:(as.numeric(as.Date('2000-01-01')) - as.numeric(as.Date('1930-01-01'))), n, replace = TRUE)
 
 male <- sample(c(0, 1), n, replace = TRUE)
 
@@ -83,7 +86,8 @@ death_date <- sapply(birth_date, function(birth_date) {
     death_date <- as.Date(paste(death_year, sample(1:12, 1), sample(1:28, 1), sep = "-"))
     
     if (death_date < birth_date) {
-      death_date <- birth_date + sample(30:90, 1) * 365 # if death prior to entry artifically set to some years after birth
+      # if death prior to entry artifically set to some years after birth
+      death_date <- birth_date + sample(30:90, 1) * 365 
     }
     
     return(death_date)
@@ -96,7 +100,8 @@ patient <- data.frame(
   id = patient_ids,
   birth_date = birth_date,
   male = male,
-  death_date = as.Date(death_date, origin = "1970-01-01") # ensures NAs are properly recognized
+  # ensure NAs are properly recognized:
+  death_date = as.Date(death_date, origin = "1970-01-01") 
 )
 
 patient$reg_start <- sapply(1:n, function(i) {
@@ -134,7 +139,8 @@ for (patient_id in patient$id) {
   
   rx_prod_codes[index] <- sample(c('prod1', 'prod2', 'prod3', 'prod4', 'prod5'), 1)
   
-  rx_dates[index] <- as.Date('2018-01-01') + sample(0:(as.numeric(as.Date('2023-01-01')) - as.numeric(as.Date('2018-01-01'))), 1)
+  rx_dates[index] <- 
+    as.Date('2018-01-01') + sample(0:(as.numeric(as.Date('2023-01-01')) - as.numeric(as.Date('2018-01-01'))), 1)
   
   rx_durations[index] <- sample(25:120, 1)
   
@@ -515,7 +521,7 @@ trt_supply <- trt_supply %>%
 trt_supply_sens <- trt_supply # for sensitivity analysis later
 
 ## Three scenarios for treatment discontinuation due to medication supply running out:
-# 1. Patient only has 1 refill (single refill), in which case medication supply ends at the end of refill
+# 1. Patient only has 1 refill (single refill), so medication supply ends at end of refill
 # 2. Patient has 30+ day gap in refills (gap in refill)
 # 3. Patient's last refill does not last beyond study end (last refill)
 # In all those cases, we censor the patient 30 days after (or whatever your grace period is).
@@ -656,16 +662,16 @@ rm(trt_switch, id_trt, rx_for_exposure)
 Now that the active comparator cohort is created, we can generate the tables for the visualization tool. Some tables describe the cohort (number of patients, their characteristics, etc.) whereas other tables describe specific outcomes (incidence rates, bias, etc.). So, generating these tables can be done in 2 steps:
 
 1. Cohort-specific descriptive data: These dataframes describe the active comparator cohort directly. In this example, the cohort is exp0_vs_exp1. 
-a) **ps_coef:** coefficients of association between covariates and treatment  
-b) **x_by_month:** number of patients in each treatment group for each month  
+a) **ps_coef:** coefficients of association between covariates and treatment
+b) **x_by_month:** number of patients in each treatment group for each month
 c) **covs:** number of patients with certain covariates
-d) **smd:** standardized mean differences of covariates between treatment groups (unadjusted)  
+d) **smd:** standardized mean differences of covariates between treatment groups (unadjusted)
   
 2. Outcome-specific descriptive data: These dataframes describe each outcome within each active comparator cohort.  In this example, we create dataframes for outcome1 for exp0_vs_exp1. 
 a) **hr_main:** hazard ratio for main analysis (for both the ITT and AT analyses)
-b) **hr_sex:** hazard ratio in subgroups by sex  
+b) **hr_sex:** hazard ratio in subgroups by sex
 c) **hr_sens:** hazard ratio for sensitivity analysis (using 90-day grace period in the AT)
-d) **marg_bias:** marginal bias terms  
+d) **marg_bias:** marginal bias terms (only for binary cov)
 e) **y_by_month:** crude monthly outcome incidence rate  
 
 All tables will be tagged with the corresponding 'region' column, and the final data will be compiled across regions. 
@@ -701,7 +707,7 @@ ps_model
 ps_fit <- glm(ps_model, family = binomial, data = cohort)
 cohort$prop_score <- predict(ps_fit, type = 'response')
 
-cohort$iptw <- if_else(cohort$trt == 0, 1 / (1 - cohort$prop_score), 1 / ps)
+cohort$iptw <- if_else(cohort$trt == 0, 1 / (1 - cohort$prop_score), 1 / cohort$prop_score)
 summary(cohort$iptw)
 sd(cohort$iptw)
 
@@ -1055,7 +1061,8 @@ cohort_analytic_sens$itt_exit_date <- cohort_analytic$itt_exit_date
 ## Define AT exit and event
 cohort_analytic_sens$at_exit_date <- pmin(
   cohort_analytic_sens$itt_exit_date,
-  cohort_analytic_sens$disc_date_sens, # this is what differs -- using disc date from 90-day grace period
+  # this is what differs -- using disc date from 90-day grace period:
+  cohort_analytic_sens$disc_date_sens, 
   cohort_analytic_sens$switch_date,
   na.rm = TRUE
 )
@@ -1095,13 +1102,11 @@ rm(cox_at_sens, cohort_analytic_sens)
 
 ### 4.2.4 Marginal bias terms (d)
 
-To calculate marginal bias terms, we will need the proportion of patients with a given covariate and the probability of experiencing the event associated with this covariate (estimated through logistic regression). For categorical variables, we are iterating through each groups to get this probability. For binary variables, we are assessing it directly. 
+To calculate marginal bias terms, we will need the proportion of patients with a given covariate and the probability of experiencing the event associated with this covariate (estimated through logistic regression). We are only calculating the bias for binary covariates and we are adjusting for demographic variables (e.g., age, sex, ethnicity, SES...)
 
 ```{r, message = FALSE}
 library(dplyr)
 library(magrittr)
-
-cat_var <- 'age_group'
 
 marg_bias <- data.frame(
   cov_name = NA,
@@ -1110,6 +1115,10 @@ marg_bias <- data.frame(
   estimate = 0,
   risk_ratio = 0
 )
+
+# specify multi-category variables and demographic variables
+# (for which we won't calculate marginal bias)
+skip_var <- c("age_group", "male")
 
 for (cov in covariates) {
   
@@ -1123,51 +1132,8 @@ for (cov in covariates) {
     mutate(num_patients_trt = sum(num_patients)) %>%
     ungroup() %>%
     mutate(freq = num_patients / num_patients_trt)
-  
-  # a) CATEGORICAL COV
-  if (cov %in% c(cat_var)) {
-    prop_with_cov %<>% select(!!sym(cov), trt, freq)
-    
-    # split into groups for each level of the covariate
-    cov_groups <- split(prop_with_cov, prop_with_cov[[cov]])
-    
-    for (i in 1:length(cov_groups)) {
-      prop_with_cov_i <- cov_groups[[i]]
-      cov_i <- names(cov_groups[i])
-      prop_with_cov_i %<>%
-        pivot_wider(
-          names_from = trt,
-          values_from = freq,
-          names_prefix = 'freq_exp'
-        )
-      
-      prop_with_cov_i %<>%
-        select(-!!sym(cov))
-      
-      # get probability of event associated with covariate
-      model <- glm(
-        reformulate(paste0(cov, "==", "'", cov_i, "'"), 'event'),
-        data = cohort_analytic,
-        family = binomial(link = 'logit')
-      )
-      
-      risk_ratio_cov_i <- tidy(model)
-      
-      risk_ratio_cov_i %<>%
-        filter(term != '(Intercept)') %>%
-        mutate(risk_ratio = exp(estimate)) %>%
-        mutate (cov_name = paste(cov, cov_i, sep = '_')) %>%
-        select(cov_name, estimate, risk_ratio)
-      
-      # merge results
-      marg_bias_cov_i <- bind_cols(prop_with_cov_i, risk_ratio_cov_i)
-      marg_bias <- bind_rows(marg_bias, marg_bias_cov_i)
-      rm(cov_i, prop_with_cov_i, model, risk_ratio_cov_i, marg_bias_cov_i)
-    }
-  }
-  
-  # b) BINARY COV
-  if (!(cov %in% c(cat_var))) {
+
+  if (!(cov %in% c(skip_var))) {
     prop_with_cov %<>% 
       filter(!!sym(cov) == 1) %>% 
       select(trt, freq)
@@ -1225,7 +1191,7 @@ marg_bias$outcome <- outcome
 head(marg_bias)
 
 write_xlsx(marg_bias, paste(path_results, outcome, 'marg_bias.xlsx', sep = '/'))
-rm(i, cov, marg_bias_cov)
+rm(cov, marg_bias_cov)
 ```
 
 ### 4.2.5 Events by month (e)
@@ -1263,26 +1229,31 @@ get_pt_per_month <- function(month, data) {
   data[[month_col]] <- NA
   
   data[[month_col]] <- case_when(
-    # if patient entered after month ended OR entered and left before month started: 0 days contributed
+    # if patient entered after month ended OR entered and left before month started
+    # -> 0 days contributed
     data$entry_date > month_end |
       (
         data$entry_date < month_start &
           data$itt_exit_date < month_start
       ) ~ 0,
     
-    # if patient entered on/before month started and left on/after month ended: entire month contributed
+    # if patient entered on/before month started and left on/after month ended
+    # -> entire month contributed
     data$entry_date <= month_start &
       data$itt_exit_date >= month_end ~ days_in_month(ym(month)),
     
-    # if patient entered on/before month started and left before month ended: days before left contributed
+    # if patient entered on/before month started and left before month ended
+    # -> days before left contributed
     data$entry_date <= month_start &
       data$itt_exit_date < month_end ~ as.numeric(data$itt_exit_date - month_start),
     
-    # if patient entered after month started and left on/after month ended: days since entered contributed
+    # if patient entered after month started and left on/after month ended
+    # -> days since entered contributed
     data$entry_date > month_start &
       data$itt_exit_date >= month_end ~ as.numeric(month_end - data$entry_date),
     
-    # if patients entered after month started and left before month ended: days between entry and exit contributed
+    # if patients entered after month started and left before month ended
+    # -> days between entry and exit contributed
     data$entry_date > month_start &
       data$itt_exit_date < month_end ~ as.numeric (data$itt_exit_date - data$entry_date),
     
