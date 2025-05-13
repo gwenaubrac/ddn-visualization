@@ -34,11 +34,11 @@ patient_tab <- tabPanel(
       tabPanel(title = uiOutput("exp1_panel_x"), highchartOutput("x_by_month_plot_exp1")),
       tabPanel(title = uiOutput("exp0_panel_x"), highchartOutput("x_by_month_plot_exp0")),
       side = "right"
-    )
+    ),
+    
     ),
     column(1,
-      # buttons for info or download
-      actionButton("info_x_by_month", label = NULL, icon = icon("info")),
+      # buttons to download
       actionButton("download_x_by_month_plot", label = NULL, icon = icon("circle-down"), 
                    onclick = "downloadHighchart('x_by_month_plot', 'x_by_month_plot'); return false;")
     ),
@@ -110,7 +110,6 @@ patient_tab <- tabPanel(
       )
     )
     
-    
   ),
 
   ## PLOT 2: covs (covariates)
@@ -140,7 +139,6 @@ patient_tab <- tabPanel(
            )
            ),
     column(1,
-           actionButton("info_covs", label = NULL, icon = icon("info")),
            actionButton("download_covs_plot", label = NULL, icon = icon("circle-down"), 
                         onclick = "downloadHighchart('covs_plot', 'covs_plot'); return false;")
            )
@@ -155,7 +153,6 @@ patient_tab <- tabPanel(
            )
            ),
     column(1,
-           actionButton("info_ps_coef", label = NULL, icon = icon("info")),
            actionButton("download_ps_coef_plot", label = NULL, icon = icon("circle-down"), 
                         onclick = "downloadHighchart('ps_coef_plot', 'ps_coef_plot'); return false;")
            )
@@ -184,7 +181,6 @@ patient_tab <- tabPanel(
            )
            ),
     column(width = 1,
-           actionButton("info_smd", label = NULL, icon = icon("info")),
            actionButton("download_smd_plot", label = NULL, icon = icon("circle-down"), 
                         onclick = "downloadHighchart('smd_plot', 'smd_plot'); return false;")
            )
@@ -223,7 +219,6 @@ outcome_tab <- tabPanel(
     ),
     column(
       width = 1,
-      actionButton("info_y_by_month", label = NULL, icon = icon("info")),
       actionButton("download_y_by_month_plot", label = NULL, icon = icon("circle-down"), 
                    onclick = "downloadHighchart('y_by_month_plot', 'y_by_month_plot'); return false;")
     )
@@ -287,7 +282,6 @@ outcome_tab <- tabPanel(
     ),
     column(
       width = 1,
-      actionButton("info_marg_bias", label = NULL, icon = icon("info")),
       actionButton("download_marg_bias_plot", label = NULL, icon = icon("circle-down"), 
                    onclick = "downloadHighchart('marg_bias_plot', 'marg_bias_plot'); return false;")
     )
@@ -311,7 +305,6 @@ outcome_tab <- tabPanel(
     ),
     column(
       width = 1,
-      actionButton("info_subgroup", label = NULL, icon = icon("info")),
       radioButtons("model_subgroup", "Model", 
                    choices = c("ITT", "AT"), selected = "ITT")
     )

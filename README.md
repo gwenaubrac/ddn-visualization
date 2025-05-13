@@ -7,6 +7,8 @@ There are two main purposes to this project:
 1. Develop a web application tool to visualize data for multi-database studies using as an example COVID-19 data from the United Kingdom, British Columbia, and Ontario for different new-user active comparator cohorts. 
 2. Make this tool accessible and adaptable for other researchers by providing a data creation guide and modular code for the app.
 
+You can check out the live tool at: https://gwenaubrac.shinyapps.io/host_ddn_app/
+
 ### 1. Developing the web application
 
 To do so, we used CPRD data on different cohorts to generate data describing the rate of events, the prevalence of confounders, and the association between confounders and the event of interest over time. 

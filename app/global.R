@@ -137,10 +137,11 @@ home_page <- tagList(
     }
   ")),
   
-  h1("Distibuted Data Networks Visualization Tool"),
-  p("Distributed data networks (DDNs) and multi-database studies offer a new way of conducting health research that is rapid, rigorous, and reproducible."),
+  h1("Visualization Tool for Studies Using Data from Multiple Sources"),
+  p("Distributed data networks (DDNs) and other multi-database studies offer a new way of conducting health research that is rapid, rigorous, and reproducible."),
   p("However, the study populations contained in each database may be heterogeneous in terms of event rates and confounding structures."),
-  p("This tool visualizes data from the United Kingdom, British Columbia, and Ontario for different new-user active comparator cohorts which you can select in the sidebar, namely:"),
+  p("We developed a tool that visualizes key differences between data sources through plots that can easily be shared or included in publications."),
+  p("This tool was developed and tested on data from the United Kingdom, British Columbia, and Ontario for different new-user active comparator cohorts which you can select in the sidebar, namely:"),
   tags$ul(
     tags$li("New users of SNRIs and SSRIs (antidepressant medications)"),
     tags$li("New users of ARBs and ACEIs (antihypertensive medications)"),

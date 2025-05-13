@@ -60,6 +60,8 @@ server <- function(input, output, session) {
   # all patients
   output$x_by_month_plot <- renderHighchart({
     
+    cohort_selected <- input$cohort
+    
     # only keep patients in data that are in selected cohort
     # ("comparison" = which treatments are being contrasted in cohort)
     filtered_data <- x_by_month_all %>%
@@ -71,15 +73,17 @@ server <- function(input, output, session) {
       hc_legend(title = list(text = "Region")) %>%
       hc_xAxis(title = list(text = "Month")) %>%
       hc_yAxis(title = list(text = "Number of New Users")) %>% 
-      hc_title(text = "<strong>Number of New Users in Each Month</strong>") %>% 
+      hc_title(text = "<strong>Number of New Users in Each Month</strong>") %>%
       hc_colors(region_colors) %>%
-      hc_chart(backgroundColor = "#FFFFFF") 
-    
+      hc_chart(backgroundColor = "#FFFFFF") %>% 
+      hc_subtitle(text = paste0("This plot shows the number of new patients who received a prescription for a ", cohort_mapping_trt1[[cohort_selected]], " or ", cohort_mapping_trt0[[cohort_selected]], " in each month."))
   })
   
   # exposed patients only
   output$x_by_month_plot_exp1 <- renderHighchart({
     x_by_month_exp1 <- x_by_month %>% filter(trt == 1)
+    
+    cohort_selected <- input$cohort
     
     filtered_data <- x_by_month_exp1 %>%
       filter(comparison == input$cohort)
@@ -92,13 +96,16 @@ server <- function(input, output, session) {
       hc_yAxis(title = list(text = "Number of New Users")) %>%
       hc_title(text = "<strong>Number of New Users in Each Month</strong>") %>% 
       hc_colors(region_colors) %>%
-      hc_chart(backgroundColor = "#FFFFFF")
+      hc_chart(backgroundColor = "#FFFFFF") %>% 
+      hc_subtitle(text = paste0("This plot shows the number of new patients who received a prescription for a ", cohort_mapping_trt1[[cohort_selected]], " in each month."))
     
   })
   
   # unexposed patients only
   output$x_by_month_plot_exp0 <- renderHighchart({
     x_by_month_exp0 <- x_by_month %>% filter(trt == 0)
+    
+    cohort_selected <- input$cohort
     
     filtered_data <- x_by_month_exp0 %>%
       filter(comparison == input$cohort)
@@ -111,26 +118,22 @@ server <- function(input, output, session) {
       hc_yAxis(title = list(text = "Number of New Users")) %>% 
       hc_title(text = "<strong>Number of New Users in Each Month</strong>") %>% 
       hc_colors(region_colors) %>%
-      hc_chart(backgroundColor = "#FFFFFF")
-  })
-  
-  # plot info
-  observeEvent(input$info_x_by_month, {
-    shinyalert(
-      "Number of New Users",
-      "This plot shows the number of new patients who received a prescription for the drug in each month.",
-      type = "info"
-    )
+      hc_chart(backgroundColor = "#FFFFFF") %>% 
+      hc_subtitle(text = paste0("This plot shows the number of new patients who received a prescription for a ", cohort_mapping_trt0[[cohort_selected]], " in each month."))
+    
   })
   
   ## PLOT 2: covs (covariates)
   
   # all patients
   output$covs_plot <- renderHighchart({
+    
     filtered_data <- covs %>%
       filter(comparison == input$cohort) %>%
       filter(cov_name %in% input$select_covar)
 
+    cohort_selected <- input$cohort
+    
     hchart(filtered_data,
            'column',
            hcaes(
@@ -145,8 +148,8 @@ server <- function(input, output, session) {
       hc_yAxis(title = list(text = "Proportion (%)")) %>%
       hc_title(text = "<strong>Proportion of Patients with Covariates</strong>") %>%
       hc_colors(region_colors) %>%
-      hc_chart(backgroundColor = "#FFFFFF")
-
+      hc_chart(backgroundColor = "#FFFFFF") %>% 
+      hc_subtitle(text = paste0("This plot shows the proportion of patients with certain covariate values amongst ", cohort_mapping_trt1[[cohort_selected]], " and ", cohort_mapping_trt0[[cohort_selected]], " users."))
   })
   
   # exposed patients only
@@ -154,6 +157,8 @@ server <- function(input, output, session) {
     filtered_data <- covs %>%
       filter(comparison == input$cohort) %>% 
       filter(cov_name %in% input$select_covar)
+    
+    cohort_selected <- input$cohort
     
     hchart(
       filtered_data,
@@ -171,7 +176,8 @@ server <- function(input, output, session) {
       hc_yAxis(title = list(text = "Proportion (%)")) %>% 
       hc_title(text = "<strong>Proportion of Patients with Covariates</strong>") %>% 
       hc_colors(region_colors) %>%
-      hc_chart(backgroundColor = "#FFFFFF")
+      hc_chart(backgroundColor = "#FFFFFF") %>% 
+      hc_subtitle(text = paste0("This plot shows the proportion of patients with certain covariate values amongst ", cohort_mapping_trt1[[cohort_selected]], " users."))
   })
   
   # unexposed patients only
@@ -179,6 +185,8 @@ server <- function(input, output, session) {
     filtered_data <- covs %>%
       filter(comparison == input$cohort) %>% 
       filter(cov_name %in% input$select_covar)
+    
+    cohort_selected <- input$cohort
     
     hchart(
       filtered_data,
@@ -196,16 +204,8 @@ server <- function(input, output, session) {
       hc_yAxis(title = list(text = "Proportion (%)")) %>% 
       hc_title(text = "<strong>Proportion of Patients with Covariates</strong>") %>% 
       hc_colors(region_colors) %>%
-      hc_chart(backgroundColor = "#FFFFFF")
-  })
-  
-  # plot info
-  observeEvent(input$info_covs, {
-    shinyalert(
-      "Proportion with Covariates",
-      "This plot shows the proportion of patients with certain covariate values.",
-      type = "info"
-    )
+      hc_chart(backgroundColor = "#FFFFFF") %>% 
+      hc_subtitle(text = paste0("This plot shows the proportion of patients with certain covariate values amongst ", cohort_mapping_trt0[[cohort_selected]], " users."))
   })
   
   ## PLOT 3: ps_coef (propensity score coefficients)
@@ -223,11 +223,14 @@ server <- function(input, output, session) {
     cohort_label <- cohort_mapping_trt0[[cohort_selected]]
     cohort_label
   })
+  
   output$ps_coef_plot <- renderHighchart({
     
     filtered_data <- ps_coef %>%
       filter(comparison == input$cohort) %>% 
       filter(cov_name %in% input$select_covar)
+    
+    cohort_selected <- input$cohort
     
     hchart(
       filtered_data,
@@ -259,16 +262,8 @@ server <- function(input, output, session) {
                  ))) %>% 
       hc_title(text = "<strong>Propensity Score Coefficients</strong>") %>% 
       hc_colors(region_colors) %>%
-      hc_chart(backgroundColor = "#FFFFFF")
-  })
-  
-  # plot info
-  observeEvent(input$info_ps_coef, {
-    shinyalert(
-      "Propensity Score Coefficient",
-      "This plot shows the exponentiated coefficient (odds ratio) of each covariate in the propensity score model. This coefficient describes the strength of the association between each covariate and the treatment compared to the reference. The reference group is the one indicated by ref in the sidebar.",
-      type = "info"
-    )
+      hc_chart(backgroundColor = "#FFFFFF") %>% 
+      hc_subtitle(text = paste0("This plot shows the exponentiated coefficient (odds ratio) of each covariate in the propensity score model for initiating a ", cohort_mapping_trt1[[cohort_selected]], " compared to a ", cohort_mapping_trt0[[cohort_selected]], ". This coefficient describes the strength of the association between each covariate and the treatment compared to the reference."))
   })
   
   # output$ps_bal_plot_unweighted <- renderHighchart({
@@ -405,9 +400,12 @@ server <- function(input, output, session) {
   ## PLOT 4: smds (standardized mean differences)
   
   output$smd_plot <- renderHighchart({
+    
     filtered_data <- smd %>%
       filter(comparison == input$cohort) %>% 
       filter(cov_name %in% input$select_covar)
+    
+    cohort_selected <- input$cohort
     
     hchart(filtered_data,
            "line",
@@ -449,16 +447,8 @@ server <- function(input, output, session) {
                )) %>% 
       hc_title(text = "<strong>Standardized Mean Differences</strong>") %>% 
       hc_colors(region_colors) %>%
-      hc_chart(backgroundColor = "#FFFFFF")
-  })
-  
-  # plot info
-  observeEvent(input$info_smd, {
-    shinyalert(
-      "Standardized Mean Differences",
-      "This plot shows the crude standardized mean difference in the covariate distribution between treatment groups. A high SMD indicates imbalance between both groups with regards to the covariate. Typically, an absolute SMD below 0.1 (indicated by the dashed line) is desired to achieve balance. The reference group is the one indicated by ref in the sidebar.",
-      type = "info"
-    )
+      hc_chart(backgroundColor = "#FFFFFF") %>% 
+      hc_subtitle(text = paste0("This plot shows the crude standardized mean difference in the covariate distribution between treatment groups. A high SMD indicates imbalance between both groups with regards to the covariate. Typically, an absolute SMD below 0.1 (indicated by the dashed line) is desired to achieve balance. The reference group is ", cohort_mapping_trt0[[cohort_selected]], "."))
   })
   
   ## Generate "OUTCOMES" plots
@@ -482,26 +472,22 @@ server <- function(input, output, session) {
       hc_yAxis(title = list(text = "IR per 100 years")) %>% 
       hc_title(text = "<strong>Incidence Rate</strong>") %>% 
       hc_colors(region_colors) %>%
-      hc_chart(backgroundColor = "#FFFFFF")
+      hc_chart(backgroundColor = "#FFFFFF") %>% 
+      hc_subtitle(text = paste0("This plot shows the crude incidence rate of the event per 100 years for each month. Incidence rates are calculated as the number of events over the person-years contributed by patients in the cohort in each month, multiplied by 100."))
     
-  })
-  
-  # plot info
-  observeEvent(input$info_y_by_month, {
-    shinyalert(
-      "Incidence Rates",
-      "This plot shows the crude incidence rate of the event per 100 years for each month. Incidence rates are calculated as the number of events over the person-years contributed by patients in the cohort in each month, multiplied by 100.",
-      type = "info"
-    )
   })
   
   ## PLOT 6: hr_itt + hr_at + hr_sens (hazard ratios)
   # ITT (no patients censored for discontinuing treatment)
+  
   output$hr_itt_plot <- renderPlotly({
+    
     filtered_data <- hr_main %>%
       filter(outcome == input$outcome &
                comparison == input$cohort &
                model == "ITT")
+    
+    cohort_selected <- input$cohort
     
     p <- ggplotly(
       ggplot(
@@ -511,28 +497,41 @@ server <- function(input, output, session) {
           y = region,
           color = region
         )
-      ) + 
-        geom_point() + 
+      ) +
+        geom_point() +
         theme_bw() +
         geom_errorbarh(aes(xmin = hr_ci_lower, xmax = hr_ci_upper, height = 0.05)) + # add CIs
         geom_vline(xintercept = 1, linetype = "dashed", color = "black", linewidth = 1) + # add HR of 1
         labs(
           x = "HR (95% CI)",
           y = "Region",
-          color = "Region"
+          color = "Region",
         ) +
         scale_color_manual(values = region_colors) +
         ggtitle("Hazard Ratio (ITT)") +
         theme(
-          plot.title = element_text(hjust = 0.5, face = "bold", size = 18),  
-          axis.title.x = element_text(size = 16), 
-          axis.title.y = element_text(size = 16), 
-          axis.text.x = element_text(size = 14),
-          axis.text.y = element_text(size = 14),
-          legend.title = element_text(size = 14),
-          legend.text = element_text(size = 12)
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 12),
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 12),
+          axis.text.y = element_text(size = 12),
+          legend.title = element_text(size = 12),
+          legend.text = element_text(size = 10),
         ) +
         scale_x_continuous(trans = "log", labels = scales::number_format(accuracy = 0.01)) # plot on a log scale with 2 decimals
+      ) %>% 
+      layout(
+        title = list(
+          text = paste0(
+            '<b>Hazard Ratio (ITT)</b><br>',
+            '<span style="font-size:11px">',
+            'This forest plot shows the IPTW-weighted hazard ratio and corresponding 95% confidence intervals using an ITT approach.',
+            '<br>The x-axis is on a log-scale. The reference group is ', cohort_mapping_trt0[[cohort_selected]], '.',
+            '</span>'
+          ),
+          x = 0.5,
+          xanchor = "center"
+        )
       )
     
     # the default quality of plots downloaded using plotly (from the browser) is poor
@@ -566,10 +565,13 @@ server <- function(input, output, session) {
   
   # AT (with 30-day grace period to define treatment discontinuation)
   output$hr_at_plot <- renderPlotly({
+    
     filtered_data <- hr_main %>%
       filter(outcome == input$outcome &
                comparison == input$cohort &
                model == "AT")
+    
+    cohort_selected <- input$cohort
     
     p <- ggplotly(
       ggplot(
@@ -592,15 +594,28 @@ server <- function(input, output, session) {
         scale_color_manual(values = region_colors) +
         ggtitle("Hazard Ratio (AT with 30-day grace period)") +
         theme(
-          plot.title = element_text(hjust = 0.5, face = "bold", size = 18),  
-          axis.title.x = element_text(size = 16), 
-          axis.title.y = element_text(size = 16), 
-          axis.text.x = element_text(size = 14),
-          axis.text.y = element_text(size = 14),
-          legend.title = element_text(size = 14),
-          legend.text = element_text(size = 12)
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 12),
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 12),
+          axis.text.y = element_text(size = 12),
+          legend.title = element_text(size = 12),
+          legend.text = element_text(size = 10),
         ) +
-        scale_x_continuous(trans = "log", labels = scales::number_format(accuracy = 0.01))
+        scale_x_continuous(trans = "log", labels = scales::number_format(accuracy = 0.01)) # plot on a log scale with 2 decimals
+    ) %>% 
+      layout(
+        title = list(
+          text = paste0(
+            '<b>Hazard Ratio (AT with 30-day grace period)</b><br>',
+            '<span style="font-size:11px">',
+            'This forest plot shows the IPTW-weighted hazard ratio and corresponding 95% confidence intervals using an AT approach ',
+            '<br> with a 30-day grace period. The x-axis is on a log-scale. The reference group is ', cohort_mapping_trt0[[cohort_selected]], '.',
+            '</span>'
+          ),
+          x = 0.5,
+          xanchor = "center"
+        )
       )
     
     # add margins around plot
@@ -630,9 +645,12 @@ server <- function(input, output, session) {
   
   # AT (sensitivity analysis with 90-day grace period to define treatment discontinuation)
   output$hr_sens_plot <- renderPlotly({
+    
     filtered_data <- hr_sens %>%
       filter(outcome == input$outcome &
                comparison == input$cohort)
+    
+    cohort_selected <- input$cohort
     
     p <- ggplotly(
       ggplot(
@@ -653,16 +671,29 @@ server <- function(input, output, session) {
         scale_color_manual(values = region_colors) +
         ggtitle("Hazard Ratio (AT with 90-day grace period)") +
         theme(
-          plot.title = element_text(hjust = 0.5, face = "bold", size = 18),  
-          axis.title.x = element_text(size = 16), 
-          axis.title.y = element_text(size = 16), 
-          axis.text.x = element_text(size = 14),
-          axis.text.y = element_text(size = 14),
-          legend.title = element_text(size = 14),
-          legend.text = element_text(size = 12)
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 12),
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 12),
+          axis.text.y = element_text(size = 12),
+          legend.title = element_text(size = 12),
+          legend.text = element_text(size = 10),
         ) +
-        scale_x_continuous(trans = "log", labels = scales::number_format(accuracy = 0.01))
-    )
+        scale_x_continuous(trans = "log", labels = scales::number_format(accuracy = 0.01)) # plot on a log scale with 2 decimals
+    ) %>% 
+      layout(
+        title = list(
+          text = paste0(
+            '<b>Hazard Ratio (AT with 90-day grace period)</b><br>',
+            '<span style="font-size:11px">',
+            'This forest plot shows the IPTW-weighted hazard ratio and corresponding 95% confidence intervals using an AT approach ',
+            '<br> with a 90-day grace period. The x-axis is on a log-scale. The reference group is ', cohort_mapping_trt0[[cohort_selected]], '.',
+            '</span>'
+          ),
+          x = 0.5,
+          xanchor = "center"
+        )
+      )
     
     # add margins around plot
     p <- p %>% layout(
@@ -688,21 +719,14 @@ server <- function(input, output, session) {
     p
   })
   
-  # plot info
-  observeEvent(input$info_hr, {
-    shinyalert(
-      "Hazard Ratio",
-      "These forest plots show the estimated IPTW-weighted hazard ratio of the event and corresponding 95% confidence intervals. The x-axis is on a log-scale. You can view results for the intention-to-treat anlaysis (ITT) and the as-treated analysis (AT) using different grace periods to define treatment discontinuation. The reference group is the one indicated by ref in the sidebar.",
-      type = "info"
-    )
-  })
-  
   # ITT vs AT
   output$itt_vs_at_plot <- renderPlotly({
     
     filtered_data <- hr_main %>% 
       filter(outcome == input$outcome &
                comparison == input$cohort)
+    
+    cohort_selected <- input$cohort
     
     itt_data <- filtered_data %>% filter(model == "ITT") %>% select(-model)
     at_data <- filtered_data %>% filter(model == "AT") %>% select(-model)
@@ -734,13 +758,27 @@ server <- function(input, output, session) {
         scale_color_manual(values = region_colors) +
         ggtitle("Intention-to-Treat vs As Treated Hazard Ratio") +
         theme(
-          plot.title = element_text(hjust = 0.5, face = "bold", size = 18),  
-          axis.title.x = element_text(size = 16), 
-          axis.title.y = element_text(size = 16), 
-          axis.text.x = element_text(size = 14),
-          axis.text.y = element_text(size = 14),
-          legend.title = element_text(size = 14),
-          legend.text = element_text(size = 12)
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 12),
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 12),
+          axis.text.y = element_text(size = 12),
+          legend.title = element_text(size = 12),
+          legend.text = element_text(size = 10),
+        ) +
+        scale_x_continuous(trans = "log", labels = scales::number_format(accuracy = 0.01)) # plot on a log scale with 2 decimals
+    ) %>% 
+      layout(
+        title = list(
+          text = paste0(
+            '<b>Intention-to-Treat vs As Treated Hazard Ratio</b><br>',
+            '<span style="font-size:11px">',
+            'This plot compares the IPTW-weighted estimates (and confidence intervals) for the intention-to-treat and the as-treated analyses. <br>',
+            'The dotted line represents the identity line, along which ITT and AT estimates are equal. The reference group is ', cohort_mapping_trt0[[cohort_selected]], '.',
+            '</span>'
+          ),
+          x = 0.5,
+          xanchor = "center"
         )
       )
     
@@ -768,21 +806,15 @@ server <- function(input, output, session) {
     p
   })
   
-  # plot info
-  observeEvent(input$info_itt_vs_at, {
-    shinyalert(
-      "Intention-to-Treat vs As-Treated",
-      "This plot compares the IPTW-weighted estimates (and confidence intervals) for the intention-to-treat (ITT) and the as-treated analysis (AT), in which patients are censored when they discontinue their treatment for 30 days or more. The dotted line represents the identity line, along which ITT and AT estimates are equal. The reference group is the one indicated by ref in the sidebar.",
-      type = "info"
-    )
-  })
-  
   ## PLOT 7: marg_bias (marginal bias terms)
   output$marg_bias_plot <- renderHighchart({
+    
     filtered_data <- marg_bias %>%
       filter(outcome == input$outcome &
                comparison == input$cohort) %>% 
       filter(cov_name %in% input$select_covar_bias)
+    
+    cohort_selected <- input$cohort
     
     hchart(filtered_data,
            'scatter',
@@ -798,17 +830,9 @@ server <- function(input, output, session) {
       hc_yAxis(title = list(text = "Bias")) %>% 
       hc_title(text = "<strong>Marginal Bias Terms</strong>") %>% 
       hc_colors(region_colors) %>%
-      hc_chart(backgroundColor = "#FFFFFF")
+      hc_chart(backgroundColor = "#FFFFFF") %>% 
+      hc_subtitle(text = paste0("This plot shows the marginal bias terms of each covariate with the outcome, which is the possible amount of confounding the covariate could adjust for in a multiplicative model given a binary exposure and outcome after adjusting for demographic variables."))
     
-  })
-  
-  # plot info
-  observeEvent(input$info_marg_bias, {
-    shinyalert(
-      "Marginal Bias Terms",
-      "This plot shows the marginal bias terms of each covariate with the outcome, which is the possible amount of confounding the covariate could adjust for in a multiplicative model given a binary exposure and outcome after adjusting for demographic variables. The reference group is the one indicated by ref in the sidebar.",
-      type = "info"
-    )
   })
   
   ## PLOT 8: hr_age + hr_sex + hr_year (subgroup analyses)
@@ -820,6 +844,8 @@ server <- function(input, output, session) {
       filter(outcome == input$outcome &
                comparison == input$cohort &
                model == input$model_subgroup)
+    
+    cohort_selected <- input$cohort
     
     p <- ggplotly(
       ggplot(
@@ -848,13 +874,27 @@ server <- function(input, output, session) {
         scale_color_manual(values = region_colors) +
         ggtitle("Hazard Ratio in Subgroups by Age") +
         theme(
-          plot.title = element_text(hjust = 0.5, face = "bold", size = 18),  
-          axis.title.x = element_text(size = 16), 
-          axis.title.y = element_text(size = 16), 
-          axis.text.x = element_text(size = 14),
-          axis.text.y = element_text(size = 14),
-          legend.title = element_text(size = 14),
-          legend.text = element_text(size = 12)
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 12),
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 12),
+          axis.text.y = element_text(size = 12),
+          legend.title = element_text(size = 12),
+          legend.text = element_text(size = 10),
+        ) +
+        scale_x_continuous(trans = "log", labels = scales::number_format(accuracy = 0.01)) # plot on a log scale with 2 decimals
+    ) %>% 
+      layout(
+        title = list(
+          text = paste0(
+            '<b>Hazard Ratio in Subgroups by Age</b><br>',
+            '<span style="font-size:11px">',
+            'This plot shows the IPTW-weighted hazard ratios comparing subgroups by age. You can view results for intention-to-treat (ITT) or as-treated (AT)<br>',
+            'on the right. The dotted line represents the identity line, along which estimates in both subgroups are equal. The reference group is ', cohort_mapping_trt0[[cohort_selected]], '.',
+            '</span>'
+          ),
+          x = 0.5,
+          xanchor = "center"
         )
       )
     
@@ -891,6 +931,8 @@ server <- function(input, output, session) {
     filtered_data <- filtered_data %>%
       filter(model == input$model_subgroup)
     
+    cohort_selected <- input$cohort
+    
     p <- ggplotly(
       ggplot(
         data = filtered_data,
@@ -918,15 +960,29 @@ server <- function(input, output, session) {
         scale_color_manual(values = region_colors) +
         ggtitle("Hazard Ratio in Subgroups by Sex") +
         theme(
-          plot.title = element_text(hjust = 0.5, face = "bold", size = 18),  
-          axis.title.x = element_text(size = 16), 
-          axis.title.y = element_text(size = 16), 
-          axis.text.x = element_text(size = 14),
-          axis.text.y = element_text(size = 14),
-          legend.title = element_text(size = 14),
-          legend.text = element_text(size = 12)
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 12),
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 12),
+          axis.text.y = element_text(size = 12),
+          legend.title = element_text(size = 12),
+          legend.text = element_text(size = 10),
+        ) +
+        scale_x_continuous(trans = "log", labels = scales::number_format(accuracy = 0.01)) # plot on a log scale with 2 decimals
+    ) %>% 
+      layout(
+        title = list(
+          text = paste0(
+            '<b>Hazard Ratio in Subgroups by Sex</b><br>',
+            '<span style="font-size:11px">',
+            'This plot shows the IPTW-weighted hazard ratios comparing subgroups by sex. You can view results for intention-to-treat (ITT) or as-treated (AT)<br>',
+            'on the right. The dotted line represents the identity line, along which estimates in both subgroups are equal. The reference group is ', cohort_mapping_trt0[[cohort_selected]], '.',
+            '</span>'
+          ),
+          x = 0.5,
+          xanchor = "center"
         )
-    )
+      )
     
     # add margins around plot
     p <- p %>% layout(
@@ -961,6 +1017,8 @@ server <- function(input, output, session) {
     filtered_data <- filtered_data %>%
       filter(model == input$model_subgroup)
     
+    cohort_selected <- input$cohort
+    
     p <- ggplotly(
       ggplot(
         data = filtered_data,
@@ -988,15 +1046,29 @@ server <- function(input, output, session) {
         scale_color_manual(values = region_colors) +
         ggtitle("Hazard Ratio in Subgroups by Year of Cohort Entry") +
         theme(
-          plot.title = element_text(hjust = 0.5, face = "bold", size = 18),  
-          axis.title.x = element_text(size = 16), 
-          axis.title.y = element_text(size = 16), 
-          axis.text.x = element_text(size = 14),
-          axis.text.y = element_text(size = 14),
-          legend.title = element_text(size = 14),
-          legend.text = element_text(size = 12)
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 12),
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 12),
+          axis.text.y = element_text(size = 12),
+          legend.title = element_text(size = 12),
+          legend.text = element_text(size = 10),
+        ) +
+        scale_x_continuous(trans = "log", labels = scales::number_format(accuracy = 0.01)) # plot on a log scale with 2 decimals
+    ) %>% 
+      layout(
+        title = list(
+          text = paste0(
+            '<b>Hazard Ratio in Subgroups by Year of Cohort Entry</b><br>',
+            '<span style="font-size:11px">',
+            'This plot shows the IPTW-weighted hazard ratios comparing subgroups by year of cohort entry. You can view results for intention-to-treat (ITT) or as-treated (AT)<br>',
+            'on the right. The dotted line represents the identity line, along which estimates in both subgroups are equal. The reference group is ', cohort_mapping_trt0[[cohort_selected]], '.',
+            '</span>'
+          ),
+          x = 0.5,
+          xanchor = "center"
         )
-    )
+      )
     
     # add margins around plot
     p <- p %>% layout(
@@ -1031,6 +1103,8 @@ server <- function(input, output, session) {
     filtered_data <- filtered_data %>%
       filter(model == input$model_subgroup)
     
+    cohort_selected <- input$cohort
+    
     p <- ggplotly(
       ggplot(
         data = filtered_data,
@@ -1058,15 +1132,29 @@ server <- function(input, output, session) {
         scale_color_manual(values = region_colors) +
         ggtitle("Hazard Ratio in Subgroups by Year of Cohort Entry") +
         theme(
-          plot.title = element_text(hjust = 0.5, face = "bold", size = 18),  
-          axis.title.x = element_text(size = 16), 
-          axis.title.y = element_text(size = 16), 
-          axis.text.x = element_text(size = 14),
-          axis.text.y = element_text(size = 14),
-          legend.title = element_text(size = 14),
-          legend.text = element_text(size = 12)
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 12),
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 12),
+          axis.text.y = element_text(size = 12),
+          legend.title = element_text(size = 12),
+          legend.text = element_text(size = 10),
+        ) +
+        scale_x_continuous(trans = "log", labels = scales::number_format(accuracy = 0.01)) # plot on a log scale with 2 decimals
+    ) %>% 
+      layout(
+        title = list(
+          text = paste0(
+            '<b>Hazard Ratio in Subgroups by Year of Cohort Entry</b><br>',
+            '<span style="font-size:11px">',
+            'This plot shows the IPTW-weighted hazard ratios comparing subgroups by year of cohort entry. You can view results for intention-to-treat (ITT) or as-treated (AT)<br>',
+            'on the right. The dotted line represents the identity line, along which estimates in both subgroups are equal. The reference group is ', cohort_mapping_trt0[[cohort_selected]], '.',
+            '</span>'
+          ),
+          x = 0.5,
+          xanchor = "center"
         )
-    ) 
+      )
     
     # add margins around plot
     p <- p %>% layout(
@@ -1101,6 +1189,8 @@ server <- function(input, output, session) {
     filtered_data <- filtered_data %>%
       filter(model == input$model_subgroup)
     
+    cohort_selected <- input$cohort
+    
     p <- ggplotly(
       ggplot(
         data = filtered_data,
@@ -1128,15 +1218,29 @@ server <- function(input, output, session) {
         scale_color_manual(values = region_colors) +
         ggtitle("Hazard Ratio in Subgroups by Year of Cohort Entry") +
         theme(
-          plot.title = element_text(hjust = 0.5, face = "bold", size = 18),  
-          axis.title.x = element_text(size = 16), 
-          axis.title.y = element_text(size = 16), 
-          axis.text.x = element_text(size = 14),
-          axis.text.y = element_text(size = 14),
-          legend.title = element_text(size = 14),
-          legend.text = element_text(size = 12)
+          plot.title = element_text(hjust = 0.5, face = "bold", size = 12),
+          axis.title.x = element_text(size = 12),
+          axis.title.y = element_text(size = 12),
+          axis.text.x = element_text(size = 12),
+          axis.text.y = element_text(size = 12),
+          legend.title = element_text(size = 12),
+          legend.text = element_text(size = 10),
+        ) +
+        scale_x_continuous(trans = "log", labels = scales::number_format(accuracy = 0.01)) # plot on a log scale with 2 decimals
+    ) %>% 
+      layout(
+        title = list(
+          text = paste0(
+            '<b>Hazard Ratio in Subgroups by Year of Cohort Entry</b><br>',
+            '<span style="font-size:11px">',
+            'This plot shows the IPTW-weighted hazard ratios comparing subgroups by year of cohort entry. You can view results for intention-to-treat (ITT) or as-treated (AT)<br>',
+            'on the right. The dotted line represents the identity line, along which estimates in both subgroups are equal. The reference group is ', cohort_mapping_trt0[[cohort_selected]], '.',
+            '</span>'
+          ),
+          x = 0.5,
+          xanchor = "center"
         )
-    )
+      )
     
     # add margins around plot
     p <- p %>% layout(
@@ -1162,12 +1266,4 @@ server <- function(input, output, session) {
     p
   })
   
-  # plot info
-  observeEvent(input$info_subgroup, {
-    shinyalert(
-      "Subgroup Analyses",
-      "These plots show the IPTW-weighted hazard ratios comparing different subgroups (by age, sex, and year of cohort entry). You can select whether to view results for the intention-to-treat (ITT) or as-treated (AT) analyses. The dotted line represents the identity line, along which estimates in both subgroups being compared are equal. The reference group is the one indicated by ref in the sidebar.",
-      type = "info"
-    )
-  })
 }
