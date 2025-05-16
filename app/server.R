@@ -448,7 +448,7 @@ server <- function(input, output, session) {
       hc_title(text = "<strong>Standardized Mean Differences</strong>") %>% 
       hc_colors(region_colors) %>%
       hc_chart(backgroundColor = "#FFFFFF") %>% 
-      hc_subtitle(text = paste0("This plot shows the crude standardized mean difference in the covariate distribution between treatment groups. A high SMD indicates imbalance between both groups with regards to the covariate. Typically, an absolute SMD below 0.1 (indicated by the dashed line) is desired to achieve balance. The reference group is ", cohort_mapping_trt0[[cohort_selected]], "."))
+      hc_subtitle(text = paste0("This plot shows the crude standardized mean difference in the covariate distribution between ", cohort_mapping_trt1[[cohort_selected]], " and ", cohort_mapping_trt0[[cohort_selected]], ". A high SMD indicates imbalance between both groups with regards to the covariate. Typically, an absolute SMD below 0.1 (indicated by the dashed line) is desired to achieve balance. The reference group is ", cohort_mapping_trt0[[cohort_selected]], "."))
   })
   
   ## Generate "OUTCOMES" plots
@@ -473,7 +473,7 @@ server <- function(input, output, session) {
       hc_title(text = "<strong>Incidence Rate</strong>") %>% 
       hc_colors(region_colors) %>%
       hc_chart(backgroundColor = "#FFFFFF") %>% 
-      hc_subtitle(text = paste0("This plot shows the crude incidence rate of the event per 100 years for each month. Incidence rates are calculated as the number of events over the person-years contributed by patients in the cohort in each month, multiplied by 100."))
+      hc_subtitle(text = paste0("This plot shows the crude incidence rate of ", names(all_outcomes[all_outcomes == input$outcome]), " per 100 years for each month. Incidence rates are calculated as the number of events over the person-years contributed by patients in the cohort in each month, multiplied by 100."))
     
   })
   
@@ -525,7 +525,7 @@ server <- function(input, output, session) {
           text = paste0(
             '<b>Hazard Ratio (ITT)</b><br>',
             '<span style="font-size:11px">',
-            'This forest plot shows the IPTW-weighted hazard ratio and corresponding 95% confidence intervals using an ITT approach.',
+            'This forest plot shows the IPTW-weighted hazard ratio and corresponding 95% CI using an ITT approach for ', names(all_outcomes[all_outcomes == input$outcome]),
             '<br>The x-axis is on a log-scale. The reference group is ', cohort_mapping_trt0[[cohort_selected]], '.',
             '</span>'
           ),
@@ -609,7 +609,7 @@ server <- function(input, output, session) {
           text = paste0(
             '<b>Hazard Ratio (AT with 30-day grace period)</b><br>',
             '<span style="font-size:11px">',
-            'This forest plot shows the IPTW-weighted hazard ratio and corresponding 95% confidence intervals using an AT approach ',
+            'This forest plot shows the IPTW-weighted hazard ratio and corresponding 95% CI using an AT approach for ', names(all_outcomes[all_outcomes == input$outcome]),
             '<br> with a 30-day grace period. The x-axis is on a log-scale. The reference group is ', cohort_mapping_trt0[[cohort_selected]], '.',
             '</span>'
           ),
@@ -686,7 +686,7 @@ server <- function(input, output, session) {
           text = paste0(
             '<b>Hazard Ratio (AT with 90-day grace period)</b><br>',
             '<span style="font-size:11px">',
-            'This forest plot shows the IPTW-weighted hazard ratio and corresponding 95% confidence intervals using an AT approach ',
+            'This forest plot shows the IPTW-weighted hazard ratio and corresponding 95% CI using an AT approach for ', names(all_outcomes[all_outcomes == input$outcome]),
             '<br> with a 90-day grace period. The x-axis is on a log-scale. The reference group is ', cohort_mapping_trt0[[cohort_selected]], '.',
             '</span>'
           ),
@@ -773,7 +773,7 @@ server <- function(input, output, session) {
           text = paste0(
             '<b>Intention-to-Treat vs As Treated Hazard Ratio</b><br>',
             '<span style="font-size:11px">',
-            'This plot compares the IPTW-weighted estimates (and confidence intervals) for the intention-to-treat and the as-treated analyses. <br>',
+            'This plot compares the IPTW-weighted estimates and 95% CI for the ITT and AT analyses of ', names(all_outcomes[all_outcomes == input$outcome]), '. <br>',
             'The dotted line represents the identity line, along which ITT and AT estimates are equal. The reference group is ', cohort_mapping_trt0[[cohort_selected]], '.',
             '</span>'
           ),
@@ -831,7 +831,7 @@ server <- function(input, output, session) {
       hc_title(text = "<strong>Marginal Bias Terms</strong>") %>% 
       hc_colors(region_colors) %>%
       hc_chart(backgroundColor = "#FFFFFF") %>% 
-      hc_subtitle(text = paste0("This plot shows the marginal bias terms of each covariate with the outcome, which is the possible amount of confounding the covariate could adjust for in a multiplicative model given a binary exposure and outcome after adjusting for demographic variables."))
+      hc_subtitle(text = paste0("This plot shows the marginal bias terms of each covariate with ", names(all_outcomes[all_outcomes == input$outcome]), ", which is the possible amount of confounding the covariate could adjust for in a multiplicative model given a binary exposure and outcome after adjusting for demographic variables."))
     
   })
   
@@ -889,7 +889,7 @@ server <- function(input, output, session) {
           text = paste0(
             '<b>Hazard Ratio in Subgroups by Age</b><br>',
             '<span style="font-size:11px">',
-            'This plot shows the IPTW-weighted hazard ratios comparing subgroups by age. You can view results for intention-to-treat (ITT) or as-treated (AT)<br>',
+            'This plot shows the IPTW-weighted hazard ratio of ', names(all_outcomes[all_outcomes == input$outcome]), ' comparing subgroups by age. You select results for ITT or AT<br>',
             'on the right. The dotted line represents the identity line, along which estimates in both subgroups are equal. The reference group is ', cohort_mapping_trt0[[cohort_selected]], '.',
             '</span>'
           ),
@@ -975,7 +975,7 @@ server <- function(input, output, session) {
           text = paste0(
             '<b>Hazard Ratio in Subgroups by Sex</b><br>',
             '<span style="font-size:11px">',
-            'This plot shows the IPTW-weighted hazard ratios comparing subgroups by sex. You can view results for intention-to-treat (ITT) or as-treated (AT)<br>',
+            'This plot shows the IPTW-weighted hazard ratio of ', names(all_outcomes[all_outcomes == input$outcome]), ' comparing subgroups by sex. You can select results for ITT or AT<br>',
             'on the right. The dotted line represents the identity line, along which estimates in both subgroups are equal. The reference group is ', cohort_mapping_trt0[[cohort_selected]], '.',
             '</span>'
           ),
@@ -1061,7 +1061,7 @@ server <- function(input, output, session) {
           text = paste0(
             '<b>Hazard Ratio in Subgroups by Year of Cohort Entry</b><br>',
             '<span style="font-size:11px">',
-            'This plot shows the IPTW-weighted hazard ratios comparing subgroups by year of cohort entry. You can view results for intention-to-treat (ITT) or as-treated (AT)<br>',
+            'This plot shows the IPTW-weighted hazard ratio of ', names(all_outcomes[all_outcomes == input$outcome]), ' comparing subgroups by year of cohort entry. You can select results for ITT or AT analyses<br>',
             'on the right. The dotted line represents the identity line, along which estimates in both subgroups are equal. The reference group is ', cohort_mapping_trt0[[cohort_selected]], '.',
             '</span>'
           ),
@@ -1147,7 +1147,7 @@ server <- function(input, output, session) {
           text = paste0(
             '<b>Hazard Ratio in Subgroups by Year of Cohort Entry</b><br>',
             '<span style="font-size:11px">',
-            'This plot shows the IPTW-weighted hazard ratios comparing subgroups by year of cohort entry. You can view results for intention-to-treat (ITT) or as-treated (AT)<br>',
+            'This plot shows the IPTW-weighted hazard ratio of ', names(all_outcomes[all_outcomes == input$outcome]), ' comparing subgroups by year of cohort entry. You can select results for ITT or AT analyses<br>',
             'on the right. The dotted line represents the identity line, along which estimates in both subgroups are equal. The reference group is ', cohort_mapping_trt0[[cohort_selected]], '.',
             '</span>'
           ),
@@ -1233,7 +1233,7 @@ server <- function(input, output, session) {
           text = paste0(
             '<b>Hazard Ratio in Subgroups by Year of Cohort Entry</b><br>',
             '<span style="font-size:11px">',
-            'This plot shows the IPTW-weighted hazard ratios comparing subgroups by year of cohort entry. You can view results for intention-to-treat (ITT) or as-treated (AT)<br>',
+            'This plot shows the IPTW-weighted hazard ratio of ', names(all_outcomes[all_outcomes == input$outcome]), ' comparing subgroups by year of cohort entry. You can view results for ITT or AT analyses<br>',
             'on the right. The dotted line represents the identity line, along which estimates in both subgroups are equal. The reference group is ', cohort_mapping_trt0[[cohort_selected]], '.',
             '</span>'
           ),

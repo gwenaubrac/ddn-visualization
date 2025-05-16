@@ -5,8 +5,9 @@ account: gwenaubrac
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 13691486
-bundleId: 10071671
+bundleId: 10294576
 url: https://gwenaubrac.shinyapps.io/host_ddn_app/
 version: 1
 asMultiple: FALSE
 asStatic: FALSE
+ignoredFiles: data

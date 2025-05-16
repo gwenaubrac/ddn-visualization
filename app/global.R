@@ -92,22 +92,22 @@ cohort_mapping_trt0 <- list(
 # right-hand side: how it is referenced in your code/data
 
 all_outcomes <- c(
-  "All-cause mortality" = "death", 
-  "Stroke" = "stroke",
-  "Hypoglycemia (hospitalization)" = "hypoglycemia_hosp",
-  "Diabetic amputation" = "amputation",
-  "Myocardial infarction" = "mi",
+  "all-cause mortality" = "death", 
+  "stroke" = "stroke",
+  "hypoglycemia (hospitalization)" = "hypoglycemia_hosp",
+  "diabetic amputation" = "amputation",
+  "myocardial infarction" = "mi",
   "COPD exacerbation" = "copd_exacerbation",
-  "Diabetes" = "diabetes", 
-  "Hypertension" = "hypertension",
-  "Depression" = "depression",
-  "Hyperlipidemia" = "hyperlipidemia",
+  "diabetes" = "diabetes", 
+  "hypertension" = "hypertension",
+  "depression" = "depression",
+  "hyperlipidemia" = "hyperlipidemia",
   "COPD" = "copd",
-  "Congestive Heart Failure" = "chf",
-  "End-stage renal disease" = "end_stage_renal",
-  "Retinopathy" = "retinopathy",
-  "Breast cancer screening" = "breast_cancer_screen",
-  "Colon cancer screening" = "colon_cancer_screen"
+  "congestive Heart Failure" = "chf",
+  "end-stage renal disease" = "end_stage_renal",
+  "retinopathy" = "retinopathy",
+  "breast cancer screening" = "breast_cancer_screen",
+  "colon cancer screening" = "colon_cancer_screen"
 )
 
 # optional: if certain outcomes are specific to a cohort of medication users,
